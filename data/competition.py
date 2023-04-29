@@ -1,4 +1,7 @@
+from dataclasses import dataclass
 from datetime import date
+
+from dataclasses_json import dataclass_json
 
 from data.shot import Shot
 from .match import Match, MatchSettings
@@ -6,6 +9,8 @@ from .shooter import Shooter
 from machines.machine import Machine
 
 
+# @dataclass_json
+# @dataclass
 class CompetitionSettings:
     name: str
     date: str

@@ -310,8 +310,7 @@ class PDFgen:
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Helvetica", "B", 16)
-        # pdf.set_font('Helvetica','',10)
-        pdf.text(10, 20, "Auswertung")
+        pdf.text(10, 20, f"{match.settings.competition} {match.settings.date}")
         pdf.set_font("Helvetica", "", 10)
 
         # create a temporary directory
@@ -585,12 +584,13 @@ class PDFgen:
         pdf.image(directory + "\\gesamt.png", 210 - 10 - 70, 10, 70)
         pdf.set_font("Helvetica", "", 10)
         pdf.text(10, 20 + 10, "Name:")
-        pdf.text(10, 30 + 10, "Verein:")
+        pdf.text(10, 30 + 5, "Verein:")
+        pdf.text(10, 30 + 10, "Mannschaft:")
         pdf.text(10, 50, "Ergebnis:")
         pdf.text(10, 60, "Schnitt:")
         pdf.text(10, 70, "Bester Teiler:")
-        pdf.text(70, 20 + 10, "Datum:")
-        pdf.text(70, 30 + 10, "Bewerb:")
+        # pdf.text(70, 20 + 10, "Datum:")
+        # pdf.text(70, 30 + 10, "Bewerb:")
         pdf.text(50, 50, "Ablage R/L:")
         pdf.text(50, 55, "Ablage H/T:")
 
@@ -608,10 +608,11 @@ class PDFgen:
         pdf.text(90, 70, str(match.countRing(6)))
         pdf.text(100, 70, str(match.countRing(5)))
 
-        pdf.text(25, 20 + 10, match.settings.shooter.name)
-        pdf.text(25, 30 + 10, match.settings.shooter.club)
-        pdf.text(85, 20 + 10, match.settings.date)
-        pdf.text(85, 30 + 10, match.settings.competition)
+        pdf.text(35, 20 + 10, match.settings.shooter.name)
+        pdf.text(35, 30 + 5, match.settings.shooter.club)
+        pdf.text(35, 30 + 10, match.settings.shooter.team)
+        # pdf.text(85, 20 + 10, match.settings.date)
+        # pdf.text(85, 30 + 10, match.settings.competition)
 
         if match.settings.decimal:
             pdf.set_font("Helvetica", "B", 10)

@@ -123,7 +123,7 @@ class CompetitionResultFrame(DefaultFrame):
         )
         for n, entry in enumerate([entry for entry in home_entries]):
             sheet.cell(row=row_shooter_1 + n, column=column_name_home).value = (
-                self.users[self.users[entry.shooter]].name
+                self.users[entry.shooter].name
             )
             for m, series in enumerate(entry.series):
                 sheet.cell(
@@ -131,7 +131,7 @@ class CompetitionResultFrame(DefaultFrame):
                 ).value = series.summe_ganz
         for n, entry in enumerate([entry for entry in guest_entries]):
             sheet.cell(row=row_shooter_1 + n, column=column_name_guest).value = (
-                self.users[self.users[entry.shooter]].name
+                self.users[entry.shooter].name
             )
             for m, series in enumerate(entry.series):
                 sheet.cell(

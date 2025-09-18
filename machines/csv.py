@@ -42,7 +42,7 @@ class CSV(VirtualMachine):
     def get_string(self) -> str:
         return "CSV aus Datei"
 
-    def config(self):
+    def config(self, rest=None):
         self.settings.filepath = filedialog.askopenfilename(
             initialdir="./",
             filetypes=[("CSV Dateien", "*.csv")],

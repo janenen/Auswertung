@@ -21,14 +21,14 @@ class ShowInactiveCompetitions(DefaultFrame):
         self.test_label = ttk.Label(self, text="")
         self.test_label.grid(columnspan=2, column=0, row=2, sticky="nesw", **options)
 
-        self.activate_competition_button = ttk.Button(self, text="Wettbewerb öffnen")
+        self.activate_competition_button = ttk.Button(self, text="Wettkampf öffnen")
         self.activate_competition_button.grid(column=1, row=3, sticky="e", **options)
-        Hovertip(self.activate_competition_button, "Den Wettbewerb wieder öffnen")
+        Hovertip(self.activate_competition_button, "Den Wettkampf wieder öffnen")
         self.activate_competition_button.configure(command=self.activate)
 
         self.delete_button = ttk.Button(self, text="Löschen")
         self.delete_button.grid(column=2, row=3, sticky="e", **options)
-        Hovertip(self.delete_button, "Den Wettbewerb löschen")
+        Hovertip(self.delete_button, "Den Wettkampf löschen")
         self.delete_button.configure(command=self.delete)
         self.columnconfigure(0, weight=1)
 
@@ -67,7 +67,7 @@ class ShowInactiveCompetitions(DefaultFrame):
         pass
 
     def reset(self):
-        self.test_label.config(text="Wettbewerb auswählen")
+        self.test_label.config(text="Wettkampf auswählen")
         self.selected_competition = None
 
         self.competitionlistbox.delete("0", "end")

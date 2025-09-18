@@ -2,7 +2,6 @@ pyserial
 numpy
 PyNomaly
 fpdf
-opencv-python
 matplotlib
 seaborn
 qrcode

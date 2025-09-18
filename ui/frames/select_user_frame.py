@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
-from data.user import User
+
+# from data.user import User
 from idlelib.tooltip import Hovertip
 from .default_frame import DefaultFrame
 
@@ -85,8 +86,21 @@ class SelectUserFrame(DefaultFrame):
             n = selection[0]
             if n < len(self.users.users):
                 self.user = self.userlist[n][1]
-
         self.reset()
+
+    def select_from_active_matches(self):
+        self.edit_shooter = False
+        self.create_new_user = False
+        self.edit_button["state"] = "disabled"
+        self.home["state"] = "disabled"
+        self.guest["state"] = "disabled"
+        self.name_label.config(text=self.users[self.user].name if self.user else "Nope")
+        self.club_button["state"] = "disabled"
+        self.team_button["state"] = "disabled"
+        self.club_label.config(text=self.club.name if self.club else "-")
+        self.team_label.config(text=self.team.name if self.team else "-")
+        self.activate_ok_button()
+        self.activate_back_button()
 
     def reset(self):
         self.edit_shooter = False
@@ -95,6 +109,11 @@ class SelectUserFrame(DefaultFrame):
         self.home["state"] = "disabled"
         self.guest["state"] = "disabled"
         self.userlistbox.delete("0", "end")
+        if self.competition:
+            self.parent.competitions_frame.competition_listbox.configure(state="normal")
+            self.parent.competitions_frame.show_active_entries(
+                self.select_from_active_matches
+            )
         self.userlist = [user for user in self.users]
         for user in self.userlist:
             self.userlistbox.insert("end", user[1].name)
@@ -132,6 +151,7 @@ class SelectUserFrame(DefaultFrame):
             else:
                 self.activate_ok_button()
             self.edit_button["state"] = "normal"
+        self.activate_back_button()
 
     def edit_user(self):
         self.userlistbox.unbind("<<ListboxSelect>>")

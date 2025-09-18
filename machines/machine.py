@@ -20,6 +20,10 @@ class MachineException(Exception):
         super().__init__(self.message)
 
 
+class ReadingNotAvailable(Exception):
+    pass
+
+
 @dataclass_json
 @dataclass
 class Machine(ABC):
@@ -35,28 +39,22 @@ class Machine(ABC):
         self._connection = port
 
     @abstractmethod
-    def set_port(self, port):
-        ...
+    def set_port(self, port): ...
 
     @abstractmethod
-    def config(self):
-        ...
+    def config(self, rest=None): ...
 
     @abstractmethod
-    def is_available(self) -> bool:
-        ...
+    def is_available(self) -> bool: ...
 
     @abstractmethod
-    def get_string(self) -> str:
-        ...
+    def get_string(self) -> str: ...
 
     @abstractmethod
-    def get_reading_thread(self):
-        ...
+    def get_reading_thread(self) -> "ReadingThread": ...
 
     @abstractproperty
-    def needs_setting(self) -> list[str]:
-        ...
+    def needs_setting(self) -> list[str]: ...
 
     def __str__(self) -> str:
         return self.get_string()
@@ -84,7 +82,7 @@ class ReadingThread(Thread):
         try:
             return self._messages.pop(0), self.type_of_target  # Workaround fix later
         except IndexError:
-            return None, None
+            raise ReadingNotAvailable
 
     def is_finished(self):
         return not self.is_alive() and not self._messages

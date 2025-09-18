@@ -1,7 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
 from idlelib.tooltip import Hovertip
-from data.shooter import Shooter
 from data.user import User
 from .default_frame import DefaultFrame
 
@@ -53,11 +52,12 @@ class UserSettingsFrame(DefaultFrame):
         if name == "":
             return
         if self.user:
-            self.user.shooter.name = name
-            self.user.shooter.birthday = birthday
+            self.users[self.user.shooter].name = name
+            self.users[self.user.shooter].birthday = birthday
         else:
             self.user = User(
-                shooter=Shooter(name=name, birthday=birthday),
+                name=name,
+                birthday=birthday,
             )
             if self.save.get():
                 self.users.add_user(self.user)

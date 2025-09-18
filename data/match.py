@@ -5,14 +5,14 @@ import statistics
 import uuid
 from dataclasses_json import dataclass_json
 
+from .user import User
 from .shot import Shot
 from .series import Series
-from .shooter import Shooter
 import math
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from data.competition import Competition
+    from .competition import Competition
 
 RADIUS_DICT = {
     "LP": (575, 250, 800, 2975, 225),
@@ -36,11 +36,12 @@ RADIUS_DICT = {
 @dataclass_json
 @dataclass
 class Match:
-    shooter: Shooter
+    shooter: str
     type_of_target: str
     date: str
     shots: list[Shot] = field(default_factory=list)
     id: str = ""
+    active: bool = False
     club: str = ""
     team: str = ""
     competitions: list[str] = field(default_factory=list)
@@ -106,12 +107,12 @@ class Match:
         if not competition.id in self.competitions:
             self.competitions.append(competition.id)
 
-    def __str__(self):
-        retval = ""
-        retval += f"{self.shooter.name} {self.type_of_target} {self.date}\r\n"
-        for ser in self.series:
-            retval = retval + str(ser) + "\r\n"
-        return retval
+    # def __str__(self):
+    #    retval = ""
+    #    retval += f"{self.users[self.shooter].name} {self.type_of_target} {self.date}\r\n"
+    #    for ser in self.series:
+    #        retval = retval + str(ser) + "\r\n"
+    #    return retval
 
     def __iter__(self):
         return self.__generatorfunction()
@@ -121,7 +122,7 @@ class Match:
             yield shot
 
 
-MATCH_DB_VERSION = 1
+MATCH_DB_VERSION = 2
 
 
 @dataclass_json
@@ -134,39 +135,68 @@ class MatchDB:
         with open(file, "w") as json_file:
             json_file.write(json.dumps(json.loads(self.to_json()), indent=2))
 
-    def load(filepath="./db/matches.json"):
-        if not os.path.exists(os.path.dirname(filepath)):
-            os.mkdir(os.path.dirname(filepath))
-        try:
-            with open(filepath, "r") as json_file:
-                db = MatchDB.from_json(json_file.read())
-            if not db.version == MATCH_DB_VERSION:
-                if db.version == None:
+    def load(file="./db/matches.json"):
+        with open(file, "r") as json_file:
+            return MatchDB.from_json(json_file.read())
+
+    def upgrade(file="./db/matches.json"):
+        if os.path.exists(file):
+            with open(file) as matches_file:
+                matches = json.load(matches_file)
+            if "version" in matches.keys():
+                if matches["version"] == MATCH_DB_VERSION:
+                    return
+                elif matches["version"] == 1:
                     matches = None
-                    with open(filepath) as file:
-                        matches = json.load(file)
-                        for key in matches["matches"].keys():
-                            for shot in matches["matches"][key]["shots"]:
-                                if type(shot["teiler"]) == int:
-                                    shot["teiler"] = shot["teiler"] / 10
-                                    shot["x"] = shot["x"] / 100
-                                    shot["y"] = shot["y"] / 100
-                        matches["version"] = 1
-                    with open(filepath, "w") as file:
-                        json.dump(matches, file, indent=2)
-                    return MatchDB.load(filepath)
+                    with open(file) as json_file:
+                        matches = json.load(json_file)
+                    with open("./db/users.json") as users_file:
+                        users = json.load(users_file)
+                    for key in matches["matches"].keys():
+                        name = matches["matches"][key]["shooter"]["name"]
+                        birthday = matches["matches"][key]["shooter"]["birthday"]
+                        id = None
+                        for user in users["users"].keys():
+                            if users["users"][user]["name"] == name:
+                                id = user
+                                break
+                        if not id:
+                            id = str(uuid.uuid4())
+                            users["users"][id] = {}
+                            users["users"][id]["name"] = name
+                            users["users"][id]["birthday"] = birthday
+                            users["users"][id]["id"] = id
+                        matches["matches"][key]["shooter"] = id
+                    matches["version"] = 2
+                    with open("./db/users.json", "w") as out_file:
+                        json.dump(users, out_file, indent=2)
+                    with open(file, "w") as out_file:
+                        json.dump(matches, out_file, indent=2)
+                    return MatchDB.upgrade()
                 # elif provide upgrade from version n-1
-        except Exception as e:
-            print(e)
+            else:  # version=None
+                matches = None
+                with open(file) as json_file:
+                    matches = json.load(json_file)
+                    for key in matches["matches"].keys():
+                        for shot in matches["matches"][key]["shots"]:
+                            if type(shot["teiler"]) == int:
+                                shot["teiler"] = shot["teiler"] / 10
+                                shot["x"] = shot["x"] / 100
+                                shot["y"] = shot["y"] / 100
+                    matches["version"] = 1
+                with open(file, "w") as out_file:
+                    json.dump(matches, out_file, indent=2)
+                return MatchDB.upgrade()
+        else:
             print("Matches file not existing")
             db = MatchDB(version=MATCH_DB_VERSION)
-            db.save(filepath)
-        return db
+            db.save(file)
+            return
 
     def add_match(self, match: Match) -> str:
         if not match.id:
-            id = str(uuid.uuid4())
-            match.id = id
+            match.id = str(uuid.uuid4())
         if not match.id in self.matches.keys():
             self.matches[match.id] = match
         return match.id

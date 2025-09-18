@@ -51,10 +51,9 @@ class LeagueDB:
 
     def add_league(self, league: RSBLeague) -> str:
         if not league.id:
-            id = str(uuid.uuid4())
-            league.id = id
+            league.id = str(uuid.uuid4())
         if not league.id in self.leagues.keys():
-            self.leagues[id] = league
+            self.leagues[league.id] = league
         return league.id
 
     def remove(self, key):

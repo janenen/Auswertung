@@ -1,9 +1,7 @@
-import tkinter as tk
 from tkinter import ttk
 from data.series import Series
-import ui.frames.output_frame as output_frame
 from idlelib.tooltip import Hovertip
-from data.match import RADIUS_DICT
+from ui.utils.target import TargetCanvas
 from .default_frame import DefaultFrame
 
 
@@ -14,20 +12,12 @@ class UserResultFrame(DefaultFrame):
         super().__init__(container, parent)
         # field options
         options = {"padx": 5, "pady": 0}
-        self.i = 0
+        self.i = -1
         self.shotcircles = {}
         self.canvsize = 220
-        self.canvas = tk.Canvas(
-            self, bg="white", height=self.canvsize, width=self.canvsize
-        )
+        self.canvas = TargetCanvas(self, self.canvsize)
         self.canvas.place(height=self.canvsize, width=self.canvsize)
         self.export = False
-
-        # self.canvas.bind("<ButtonPress-1>", self.scroll_start)
-        # self.canvas.bind("<B1-Motion>", self.scroll_move)
-        # self.canvas.bind("<MouseWheel>",self.zoomer)
-        # self.origX = self.canvas.xview()[0]
-        # self.origY = self.canvas.yview()[0]
 
         self.backbutton = ttk.Button(self, text="<", command=self.actionBack)
         self.backbutton.place(
@@ -50,10 +40,6 @@ class UserResultFrame(DefaultFrame):
         )
         Hovertip(self.forebutton, "Zu nächster Serie / Gesammtdarstellung wechseln")
 
-        """ttk.Label(self, text="Ausreissergrenze:").place(x=self.canvsize,y=0,height=self.canvsize/8,width=self.canvsize*3/4)
-        self.l_value = tk.DoubleVar()
-        self.l_slider = ttk.Scale(self, from_=0, to=1, orient=tk.HORIZONTAL,variable=self.l_value,command=self.recalc)
-        self.l_slider.place(x=self.canvsize,y=self.canvsize/8,height=self.canvsize/8,width=self.canvsize*3/4)"""
         self.resultlabelframe = ttk.LabelFrame(self, text="Gesamtergebnis")
         ttk.Label(self.resultlabelframe, text="Ergebnis: ").grid(
             row=0, column=0, sticky="e"
@@ -131,153 +117,63 @@ class UserResultFrame(DefaultFrame):
         )
         self.grid(column=1, row=0, padx=5, pady=5, sticky="nsew")
 
-    """def scroll_start(self, event):
-        self.canvas.scan_mark(event.x, event.y)
-
-    def scroll_move(self, event):
-        self.canvas.scan_dragto(event.x, event.y, gain=1)
-    def zoomer(self,event):
-        if (event.delta > 0):
-            self.canvas.scale("all", self.canvas.canvasx(event.x), self.canvas.canvasy(event.y), 1.1, 1.1)
-        elif (event.delta < 0):
-            self.canvas.scale("all", event.x, event.y, 0.9, 0.9)
-        self.canvas.configure(scrollregion = self.canvas.bbox("all"))"""
+    def redraw(self):
+        if self.i < 0:
+            self.actuallist = Series(self.current_match.shots)
+            self.serieslabel.config(text="Gesammt")
+            self.resultlabelframe.config(text="Gesammtergebnis")
+        else:
+            self.actuallist = self.current_match.series[self.i]
+            self.serieslabel.config(text=f"Serie {self.i+1}")
+            self.resultlabelframe.config(text=f"Serie {self.i+1}")
+        self.canvas.draw_target(self.current_match.type_of_target)
+        self.canvas.redraw_shots(self.current_match, self.i)
+        self.write_shots()
 
     def actionFore(self):
-        self.i += 1
-        if self.i == 0 or self.i > len(self.current_match.shots) / 10:
-            self.i = 0
-            self.actuallist = Series(self.current_match.shots)
-            self.serieslabel.config(text="Gesammt")
-            self.resultlabelframe.config(text="Gesammtergebnis")
-            self.redraw_shots()
-            self.write_shots()
-        else:
-            start_index = (self.i - 1) * 10
-            end_index = start_index + 10
-            self.actuallist = Series(self.current_match.shots[start_index:end_index])
-            self.serieslabel.config(text=f"Serie {self.i}")
-            self.resultlabelframe.config(text=f"Serie {self.i}")
-            self.redraw_shots()
-            self.write_shots()
+        self.i = ((self.i + 2) % (len(self.current_match.series) + 1)) - 1
+        self.redraw()
 
     def actionBack(self):
-        self.i -= 1
-        if self.i < 0:
-            self.i = len(self.current_match.shots) // 10 + 1
-            start_index = (self.i - 1) * 10
-            end_index = start_index + 10
-            self.actuallist = Series(self.current_match.shots[start_index:end_index])
-            self.serieslabel.config(text=f"Serie {self.i}")
-            self.resultlabelframe.config(text=f"Serie {self.i}")
-        elif self.i == 0:
-            # self.i = len(self.current_match.shots)/10
-            self.actuallist = Series(self.current_match.shots)
-            self.serieslabel.config(text="Gesammt")
-            self.resultlabelframe.config(text="Gesammtergebnis")
-        else:
-            start_index = (self.i - 1) * 10
-            end_index = start_index + 10
-            self.actuallist = Series(self.current_match.shots[start_index:end_index])
-            self.serieslabel.config(text=f"Serie {self.i}")
-            self.resultlabelframe.config(text=f"Serie {self.i}")
-        self.redraw_shots()
-        self.write_shots()
+        self.i = ((self.i) % (len(self.current_match.series) + 1)) - 1
+        self.redraw()
 
     def action_export(self):
         self.export = True
         self.proceed()
 
-    """def recalc(self,event=None):
-        self.current_match.getOutliers(l=self.l_value.get())
-        self.redraw_shots()"""
-
-    def redraw_shots(self):
-        self.shotcircles.clear()
-        self.canvas.delete("shot")
-        radiusCalibre = RADIUS_DICT[self.current_match.type_of_target][4]
-        radiusTen = RADIUS_DICT[self.current_match.type_of_target][0]
-        incrementRing = RADIUS_DICT[self.current_match.type_of_target][2]
-        # self.canvas.xview_moveto(self.origX)
-        # self.canvas.yview_moveto(self.origY)
-        w = 2 * (radiusTen + 9 * incrementRing)
-        scalefactor = self.canvsize / w
-        for shot in self.actuallist:
-            id = self.canvas.create_oval(
-                (shot.x * 100 - radiusCalibre) * scalefactor + self.canvsize / 2,
-                -(shot.y * 100 - radiusCalibre) * scalefactor + self.canvsize / 2,
-                (shot.x * 100 + radiusCalibre) * scalefactor + self.canvsize / 2,
-                -(shot.y * 100 + radiusCalibre) * scalefactor + self.canvsize / 2,
-                # fill="orange" if a in self.current_match.ausreisser else "green",
-                fill="green",
-                tag="shot",
-                activefill="cyan",
-            )
-            self.shotcircles[id] = shot
-            self.canvas.tag_bind(id, "<Enter>", self.update_text)
-
     def update_text(self, event):
         id = self.canvas.find_withtag("current")[0]
         self.ringlabel.config(
             text=(
-                "{:.1f}".format(self.shotcircles[id].ringe)
+                f"{self.shotcircles[id].ringe:.1f}"
                 if self.competition.decimal
                 else f"{self.shotcircles[id].ringe_ganz}"
             )
         )
-        self.xlabel.config(text="{:.2f}".format(self.shotcircles[id].x))
+        self.xlabel.config(text=f"{self.shotcircles[id].x:.2f}")
 
-        self.ylabel.config(text="{:.2f}".format(self.shotcircles[id].y))
+        self.ylabel.config(text=f"{self.shotcircles[id].y:.2f}")
 
-        self.teilerlabel.config(text="{:.1f}".format(self.shotcircles[id].teiler))
-
-    def redraw_target(self):
-        self.canvas.delete("ring")
-        radiusTen = RADIUS_DICT[self.current_match.type_of_target][0]
-        incrementRing = RADIUS_DICT[self.current_match.type_of_target][2]
-        radiusBlack = RADIUS_DICT[self.current_match.type_of_target][3]
-        w = 2 * (radiusTen + 9 * incrementRing)
-        scalefactor = self.canvsize / w
-        spiegel = self.canvas.create_oval(
-            (-radiusBlack) * scalefactor + self.canvsize / 2,
-            radiusBlack * scalefactor + self.canvsize / 2,
-            radiusBlack * scalefactor + self.canvsize / 2,
-            -radiusBlack * scalefactor + self.canvsize / 2,
-            fill="black",
-            tag="ring",
-        )
-
-        self.ringcircles = [
-            self.canvas.create_oval(
-                (-i * incrementRing) * scalefactor + self.canvsize / 2,
-                -(-i * incrementRing) * scalefactor + self.canvsize / 2,
-                (i * incrementRing) * scalefactor + self.canvsize / 2,
-                -(i * incrementRing) * scalefactor + self.canvsize / 2,
-                outline="white" if i * incrementRing < radiusBlack else "black",
-                tag="ring",
-            )
-            for i in range(1, 10)
-        ]
+        self.teilerlabel.config(text=f"{self.shotcircles[id].teiler:.1f}")
 
     def write_shots(self):
         self.resultlabel.config(
             text=(
-                "{:.1f}".format(self.actuallist.summe)
+                f"{self.actuallist.summe:.1f}"
                 if self.competition.decimal
-                else "{:d}".format(self.actuallist.summe_ganz)
+                else f"{self.actuallist.summe_ganz:d}"
             )
         )
         self.schnittlabel.config(
             text=(
-                "{:.2f}".format(self.actuallist.summe / self.actuallist.anzahl)
+                f"{self.actuallist.summe / self.actuallist.anzahl:.2f}"
                 if self.competition.decimal
-                else "{:.2f}".format(
-                    self.actuallist.summe_ganz / self.actuallist.anzahl
-                )
+                else f"{self.actuallist.summe_ganz / self.actuallist.anzahl:.2f}"
             )
         )
-        self.devxlabel.config(text="{:.1f}".format(self.actuallist.ablageRL))
-        self.devylabel.config(text="{:.1f}".format(self.actuallist.ablageHT))
+        self.devxlabel.config(text=f"{self.actuallist.ablageRL:.1f}")
+        self.devylabel.config(text=f"{self.actuallist.ablageHT:.1f}")
         for label in self.shotlabellist:
             label.destroy()
         self.shotlabellist = []
@@ -285,9 +181,9 @@ class UserResultFrame(DefaultFrame):
             label = ttk.Label(
                 self,
                 text=(
-                    "{:.1f}".format(shot.ringe)
+                    f"{shot.ringe:.1f}"
                     if self.competition.decimal
-                    else "{:d}".format(shot.ringe_ganz)
+                    else f"{shot.ringe_ganz:d}"
                 ),
                 anchor="center",
             )
@@ -305,9 +201,9 @@ class UserResultFrame(DefaultFrame):
                 label = ttk.Label(
                     self,
                     text=(
-                        "{:.1f}".format(current_series.summe)
+                        f"{current_series.summe:.1f}"
                         if self.competition.decimal
-                        else "{:d}".format(current_series.summe_ganz)
+                        else f"{current_series.summe_ganz:d}"
                     ),
                     anchor="center",
                 )
@@ -322,21 +218,18 @@ class UserResultFrame(DefaultFrame):
     def reset(self):
         self.activate_ok_button()
         self.deactivate_back_button()
+        if not self.current_match:
+            if self.competition:
+                self.current_match = self.matches[self.competition.entries[-1]]
 
-        # self.generate_button["state"] = "normal"
-        # if self.user:
-        #    self.extended.set(self.user.settings.extended_analysis)
-        # if self.current_match:
-        #    self.current_match: Match = self.current_match
-        # else:
-        #    self.current_match: Match = self.competition.entries[-1]
         self.actuallist = Series(self.current_match.shots)
         self.parent.competitions_frame.competition_listbox.configure(state="normal")
         self.parent.competitions_frame.update_entries()
         self.serieslabel.config(text="Gesammt")
         self.resultlabelframe.config(text="Gesammtergebnis")
+        self.i = -1
         self.write_shots()
 
         # self.l_slider.set(1)
-        self.redraw_target()
-        self.redraw_shots()
+        self.canvas.draw_target(self.current_match.type_of_target)
+        self.canvas.redraw_shots(self.current_match)

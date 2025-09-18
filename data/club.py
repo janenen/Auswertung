@@ -49,10 +49,9 @@ class ClubDB:
 
     def add_club(self, club: Club) -> str:
         if not club.id:
-            id = str(uuid.uuid4())
-            club.id = id
+            club.id = str(uuid.uuid4())
         if not club.id in self.clubs.keys():
-            self.clubs[id] = club
+            self.clubs[club.id] = club
         return club.id
 
     def _get_name(item: tuple[str, Club]):

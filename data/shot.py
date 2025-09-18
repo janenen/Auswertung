@@ -15,5 +15,5 @@ class Shot:
     def ringe_ganz(self):
         return math.floor(self.ringe)
 
-    def __lt__(self, other):
+    def __lt__(self, other: "Shot"):
         return self.teiler > other.teiler

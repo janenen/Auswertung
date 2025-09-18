@@ -30,7 +30,7 @@ class CompetitionResultFrame(DefaultFrame):
         self.close_button = ttk.Button(self, text="Beenden", command=self.actionClose)
         Hovertip(
             self.close_button,
-            "Wettbewerb beenden",
+            "Wettkampf beenden",
         )
         self.columnconfigure(3, weight=1)
         self.grid(column=1, row=0, padx=5, pady=5, sticky="nsew")
@@ -91,12 +91,12 @@ class CompetitionResultFrame(DefaultFrame):
         sheet = workbook.active
         sheet[DATUM] = self.competition.date
         sheet[DISZIPLIN] = self.league.discipline
-        sheet[
-            HEIM
-        ] = f"{self.clubs[self.league.home_club].name} - {self.teams[self.league.home_team].name}"
-        sheet[
-            GAST
-        ] = f"{self.clubs[self.league.guest_club].name} - {self.teams[self.league.guest_team].name}"
+        sheet[HEIM] = (
+            f"{self.clubs[self.league.home_club].name} - {self.teams[self.league.home_team].name}"
+        )
+        sheet[GAST] = (
+            f"{self.clubs[self.league.guest_club].name} - {self.teams[self.league.guest_team].name}"
+        )
         sheet[SCHUSSZAHL] = self.competition.count
         if self.league.league == "Kreisliga":
             sheet[KREISLIGA_GRUPPE] = self.league.group
@@ -122,17 +122,17 @@ class CompetitionResultFrame(DefaultFrame):
             [self.matches[key] for key in self.competition.entries],
         )
         for n, entry in enumerate([entry for entry in home_entries]):
-            sheet.cell(
-                row=row_shooter_1 + n, column=column_name_home
-            ).value = entry.shooter.name
+            sheet.cell(row=row_shooter_1 + n, column=column_name_home).value = (
+                self.users[entry.shooter].name
+            )
             for m, series in enumerate(entry.series):
                 sheet.cell(
                     row=row_shooter_1 + n, column=column_first_serie_home + m
                 ).value = series.summe_ganz
         for n, entry in enumerate([entry for entry in guest_entries]):
-            sheet.cell(
-                row=row_shooter_1 + n, column=column_name_guest
-            ).value = entry.shooter.name
+            sheet.cell(row=row_shooter_1 + n, column=column_name_guest).value = (
+                self.users[entry.shooter].name
+            )
             for m, series in enumerate(entry.series):
                 sheet.cell(
                     row=row_shooter_1 + n, column=column_first_serie_guest + m
@@ -166,7 +166,7 @@ class CompetitionResultFrame(DefaultFrame):
 
         for n, entry in enumerate(self.get_sorted_results()):
             pdf.text(10, 30 + n * 5, str(n + 1) + ".")
-            pdf.text(15, 30 + n * 5, entry.shooter.name)
+            pdf.text(15, 30 + n * 5, self.users[entry.shooter].name)
             if self.competition.modus in ["Bestes Ergebnis", "Bestes Ergebnis Zehntel"]:
                 for j, series in enumerate(entry.series):
                     pdf.text(
@@ -221,7 +221,7 @@ class CompetitionResultFrame(DefaultFrame):
                 rank_label = ttk.Label(self, text=f"{n+1}")
                 rank_label.grid(row=n + 1, column=0)
                 self.label_list.append(rank_label)
-                name_label = ttk.Label(self, text=f"{entry.shooter.name}")
+                name_label = ttk.Label(self, text=f"{self.users[entry.shooter].name}")
                 name_label.grid(row=n + 1, column=1)
                 self.label_list.append(name_label)
                 result_label = ttk.Label(
@@ -237,7 +237,7 @@ class CompetitionResultFrame(DefaultFrame):
                 )
                 result_label.grid(row=m + 1, column=4)
                 self.label_list.append(result_label)
-                name_label = ttk.Label(self, text=f"{entry.shooter.name}")
+                name_label = ttk.Label(self, text=f"{self.users[entry.shooter].name}")
                 name_label.grid(row=m + 1, column=5)
                 self.label_list.append(name_label)
                 rank_label = ttk.Label(self, text=f"{m+1}")
@@ -250,7 +250,7 @@ class CompetitionResultFrame(DefaultFrame):
                 rank_label = ttk.Label(self, text=f"{n+1}")
                 rank_label.grid(row=n, column=0)
                 self.label_list.append(rank_label)
-                name_label = ttk.Label(self, text=f"{entry.shooter.name}")
+                name_label = ttk.Label(self, text=f"{self.users[entry.shooter].name}")
                 name_label.grid(row=n, column=1)
                 self.label_list.append(name_label)
                 result_label = ttk.Label(

@@ -11,6 +11,7 @@ SORTING_FUNCTION = {
     "Bestes Ergebnis Zehntel": {"key": lambda x: x.get_result(True), "reverse": True},
     "Bester Teiler": {"key": lambda x: x.best.teiler, "reverse": False},
     "Liga des RSB (Kreis/Bezirk/Landesliga)": {},
+    "Blödsinn: Anzahl 10er": {"key": lambda x: x.countRing(10), "reverse": True},
 }
 
 
@@ -66,10 +67,9 @@ class CompetitionDB:
 
     def add_competition(self, competition: Competition) -> str:
         if not competition.id:
-            id = str(uuid.uuid4())
-            competition.id = id
+            competition.id = str(uuid.uuid4())
         if not competition.id in self.competitions.keys():
-            self.competitions[id] = competition
+            self.competitions[competition.id] = competition
         return competition.id
 
     def get_active_competitions(self) -> list[Competition]:

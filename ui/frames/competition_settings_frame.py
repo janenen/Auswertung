@@ -70,13 +70,6 @@ class CompetitionSettingsFrame(DefaultFrame):
             "Art der Scheibe / Disziplin",
         )
 
-        # self.decimal = tk.BooleanVar()
-        # self.decimal_box = tk.Checkbutton(self)
-        # self.decimal_box["text"] = "Zehntelwertung"
-        # self.decimal_box["variable"] = self.decimal
-        # self.decimal_box.grid(column=1, row=5, sticky="w", **options)
-        # Hovertip(self.decimal_box, "Wertung in Zehntelringen")
-
         self.mode = tk.StringVar()
         self.mode_menu = tk.OptionMenu(self, self.mode, *list(SORTING_FUNCTION.keys()))
         self.mode_menu.grid(column=1, row=6, sticky="w", **options)
@@ -96,7 +89,6 @@ class CompetitionSettingsFrame(DefaultFrame):
         self.count.set("40")
         self.shots_per_target.set("1")
         self.type_of_target.set("LG")
-        # self.decimal.set(False)
         self.mode.set("Bestes Ergebnis")
 
         self.activate_back_button()
@@ -104,9 +96,8 @@ class CompetitionSettingsFrame(DefaultFrame):
 
     def parseInput(self):
         name = self.name.get()
-        # decimal = self.decimal.get()
         type_of_target = self.type_of_target.get()
-        if type_of_target == "":
+        if not type_of_target in RADIUS_DICT.keys():
             showerror(
                 title="Scheibentyp auswählen",
                 message="Kein gültiger Scheibentyp ausgewählt",

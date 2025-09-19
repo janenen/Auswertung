@@ -11,7 +11,7 @@ SORTING_FUNCTION = {
     "Bestes Ergebnis Zehntel": {"key": lambda x: x.get_result(True), "reverse": True},
     "Bester Teiler": {"key": lambda x: x.best.teiler, "reverse": False},
     "Liga des RSB (Kreis/Bezirk/Landesliga)": {},
-    "Blödsinn: Anzahl 10er": {"key": lambda x: x.countRing(10), "reverse": True},
+    "Höchste Anzahl 10er": {"key": lambda x: x.countRing(10), "reverse": True},
 }
 
 

@@ -1,5 +1,5 @@
 from .machine import (
-    VirtualMachine,
+    Machine,
     MachineException,
     ReadingThread,
 )
@@ -50,7 +50,7 @@ class QRReadingThread(ReadingThread):
             self._messages.append(self.result[-1])
 
 
-class QR(VirtualMachine):
+class QR(Machine):
     def get_string(self) -> str:
         return "QR-Code aus Eingabe"
 
@@ -67,6 +67,10 @@ class QR(VirtualMachine):
         thr = QRReadingThread()
         thr.machine = self
         return thr
+
+    @staticmethod
+    def get_available():
+        return [QR()]
 
     @property
     def needs_setting(self) -> list[str]:

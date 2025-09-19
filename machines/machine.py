@@ -4,6 +4,7 @@ from dataclasses_json import dataclass_json
 from threading import Thread
 from data.shot import Shot
 
+#ToDo: Add Disag
 
 @dataclass_json
 @dataclass

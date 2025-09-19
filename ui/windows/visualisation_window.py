@@ -15,6 +15,8 @@ from ui.utils.target import TargetCanvas
 if TYPE_CHECKING:
     from ui.frames.control_frame import ControlFrame
 
+# ToDo: Only redraw if neccessary
+
 
 class Visualisation(tk.Toplevel):
     def __init__(self, master: "ControlFrame" = None):

@@ -73,7 +73,6 @@ class CompetitionVisualisationFrame(ttk.Frame):
         self.grid(row=0, column=0, sticky="nesw")
 
     def update_frame(self):
-        c = 20
         combinations = []
         k = len(self.competition.entries)
         for i in range(k):

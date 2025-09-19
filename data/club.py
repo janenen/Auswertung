@@ -20,7 +20,7 @@ CLUB_DB_VERSION = None
 @dataclass
 class ClubDB:
     clubs: Dict[str, Club] = field(default_factory=dict)
-    version = None
+    version: int | None = None
 
     def save(self, file="./db/clubs.json"):
         with open(file, "w") as json_file:

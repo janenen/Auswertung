@@ -2,10 +2,11 @@ from dataclasses import dataclass, field
 import json
 import os
 import statistics
+import sys
 import uuid
 from dataclasses_json import dataclass_json
 
-from .user import User
+from .user import User, UserDB
 from .shot import Shot
 from .series import Series
 import math
@@ -149,15 +150,15 @@ class MatchDB:
                 elif matches["version"] == 1:
                     matches = None
                     with open(file) as json_file:
-                        matches = json.load(json_file)
+                        matches: MatchDB = json.load(json_file)
                     with open("./db/users.json") as users_file:
-                        users = json.load(users_file)
+                        users: UserDB = json.load(users_file)
                     for key in matches["matches"].keys():
                         name = matches["matches"][key]["shooter"]["name"]
                         birthday = matches["matches"][key]["shooter"]["birthday"]
                         id = None
                         for user in users["users"].keys():
-                            if users["users"][user]["name"] == name:
+                            if users["users"][user]["shooter"]["name"] == name:
                                 id = user
                                 break
                         if not id:
@@ -190,6 +191,8 @@ class MatchDB:
                 return MatchDB.upgrade()
         else:
             print("Matches file not existing")
+            if not os.path.exists(os.path.dirname(file)):
+                os.mkdir(os.path.dirname(file))
             db = MatchDB(version=MATCH_DB_VERSION)
             db.save(file)
             return

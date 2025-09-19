@@ -3,6 +3,7 @@ import serial, time, re
 from serial.tools.list_ports_common import ListPortInfo
 from data.shot import Shot
 from .machine import ReadingThread
+import serial.tools.list_ports
 
 NUL = b"\x00"
 SOH = b"\x01"
@@ -57,23 +58,11 @@ class RikaReadingThread(ReadingThread):
 
 
 class Rika(Machine):
-    def is_available(self):
-        with self.connection as conn:
-            conn.read()
-            conn.write(EINZEL)  # d1 einzeltreffer
-            ans = conn.read(3)
-            conn.write(ABM)
-            conn.read(1)
-            return ans == b"200"
-
-    def set_port(self, port):
-        if type(port) == ListPortInfo:
-            self.connection = serial.Serial(port.name, 9600, timeout=0.5)
-        else:
-            raise Exception(message="Not a serial port")
+    def __init__(self, port: ListPortInfo):
+        self.connection = serial.Serial(port.name, 9600, timeout=0.5)
 
     def get_string(self) -> str:
-        return f"Rika SAG-2 an {self._connection.name}"
+        return f"Rika SAG-2 an {self.connection.name}"
 
     def config(self, rest=None):
         self.rest = rest if rest else self.settings.count
@@ -120,6 +109,30 @@ class Rika(Machine):
         thr = RikaReadingThread()
         thr.machine = self
         return thr
+
+    @staticmethod
+    def get_available():
+        machines: list[Rika] = []
+        ports = serial.tools.list_ports.comports(True)
+        print([port.name for port in ports])
+        for port in ports:
+            try:
+                print(port)
+                with serial.Serial(
+                    port.name, 9600, timeout=0.5, write_timeout=0.5
+                ) as conn:
+                    conn.read()
+                    conn.write(EINZEL)  # d1 einzeltreffer
+                    ans = conn.read(3)
+                    conn.write(ABM)
+                    conn.read(1)
+                    if not ans == b"200":
+                        continue
+                m = Rika(port)
+                machines.append(m)
+            except:
+                continue
+        return machines
 
     @property
     def needs_setting(self) -> list[str]:

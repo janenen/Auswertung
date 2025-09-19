@@ -1,6 +1,6 @@
 from tkinter import filedialog
 from .machine import (
-    VirtualMachine,
+    Machine,
     MachineException,
     ReadingThread,
 )
@@ -38,7 +38,7 @@ class CSVReadingThread(ReadingThread):
                 self._messages.append(self.result[-1])
 
 
-class CSV(VirtualMachine):
+class CSV(Machine):
     def get_string(self) -> str:
         return "CSV aus Datei"
 
@@ -67,6 +67,10 @@ class CSV(VirtualMachine):
         thr = CSVReadingThread()
         thr.machine = self
         return thr
+
+    @staticmethod
+    def get_available():
+        return [CSV()]
 
     @property
     def needs_setting(self) -> list[str]:

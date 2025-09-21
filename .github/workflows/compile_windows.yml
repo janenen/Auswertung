@@ -26,13 +26,14 @@ jobs:
         run: |
           pyinstaller auswertung.spec
 
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: Auswertung
-#          path: dist/auswertung.exe
+      #- name: Upload artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: Auswertung
+      #    path: dist/auswertung.exe
       - name: Release
         uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
           files: |
             dist/auswertung.exe

@@ -104,17 +104,16 @@ class OutputFrame(DefaultFrame):
             testfilename = f"{filename}_{n}.csv"
             n += 1
 
-        csvfile = open(os.path.join(newpath, testfilename), "w")
-        csvfile.write(
-            f"{self.current_match.date};{self.current_match.anzahl};{self.current_match.type_of_target}\r"
-        )
-        for s in self.current_match:
+        with open(os.path.join(newpath, testfilename), "w") as csvfile:
             csvfile.write(
-                f"{str(s.ringe)};{str(s.teiler)};{str(s.x)};{str(s.y)}\r".replace(
-                    ".", ","
-                )
+                f"{self.current_match.date};{self.current_match.anzahl};{self.current_match.type_of_target}\r"
             )
-        csvfile.close()
+            for s in self.current_match:
+                csvfile.write(
+                    f"{str(s.ringe)};{str(s.teiler)};{str(s.x)};{str(s.y)}\r".replace(
+                        ".", ","
+                    )
+                )
 
     def _makeShooterPDF(self):
         filedate = datetime.datetime.strptime(self.current_match.date, "%d.%m.%Y")

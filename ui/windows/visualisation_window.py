@@ -15,6 +15,8 @@ from ui.utils.target import TargetCanvas
 if TYPE_CHECKING:
     from ui.frames.control_frame import ControlFrame
 
+# ToDo: Only redraw if neccessary
+
 
 class Visualisation(tk.Toplevel):
     def __init__(self, master: "ControlFrame" = None):
@@ -73,7 +75,6 @@ class CompetitionVisualisationFrame(ttk.Frame):
         self.grid(row=0, column=0, sticky="nesw")
 
     def update_frame(self):
-        c = 20
         combinations = []
         k = len(self.competition.entries)
         for i in range(k):

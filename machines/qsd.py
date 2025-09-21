@@ -1,6 +1,6 @@
 from tkinter import filedialog
 from .machine import (
-    VirtualMachine,
+    Machine,
     MachineException,
     ReadingThread,
 )
@@ -33,7 +33,7 @@ class QSDReadingThread(ReadingThread):
                 bytes = infile.read(5 * 8)
 
 
-class QSD(VirtualMachine):
+class QSD(Machine):
     def get_string(self) -> str:
         return "QSD aus Datei"
 
@@ -51,6 +51,10 @@ class QSD(VirtualMachine):
         thr = QSDReadingThread()
         thr.machine = self
         return thr
+
+    @staticmethod
+    def get_available():
+        return [QSD()]
 
     @property
     def needs_setting(self) -> list[str]:

@@ -1,8 +1,10 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from dataclasses_json import dataclass_json
 from threading import Thread
 from data.shot import Shot
+
+# ToDo: Add Disag
 
 
 @dataclass_json
@@ -28,24 +30,9 @@ class ReadingNotAvailable(Exception):
 @dataclass
 class Machine(ABC):
     settings: MachineSettings = None
-    _connection: str = None
-
-    @property
-    def connection(self):
-        return self._connection
-
-    @connection.setter
-    def connection(self, port):
-        self._connection = port
-
-    @abstractmethod
-    def set_port(self, port): ...
 
     @abstractmethod
     def config(self, rest=None): ...
-
-    @abstractmethod
-    def is_available(self) -> bool: ...
 
     @abstractmethod
     def get_string(self) -> str: ...
@@ -53,22 +40,16 @@ class Machine(ABC):
     @abstractmethod
     def get_reading_thread(self) -> "ReadingThread": ...
 
-    @abstractproperty
+    @staticmethod
+    @abstractmethod
+    def get_available() -> list["Machine"]: ...
+
+    @property
+    @abstractmethod
     def needs_setting(self) -> list[str]: ...
 
     def __str__(self) -> str:
         return self.get_string()
-
-
-class VirtualMachine(Machine):
-    def is_available(self):
-        return self.connection == "file"  # and os.path.isfile(self.settings.filepath)
-
-    def set_port(self, port):
-        if type(port) == str:
-            self.connection = port
-        else:
-            self.connection = ""
 
 
 class ReadingThread(Thread):

@@ -25,6 +25,8 @@ class CSVReadingThread(ReadingThread):
             self.type_of_target = groupdict["type_of_target"]
 
             for line in infile:
+                if len(self.result) >= count:
+                    raise MachineException("To many shots in CSV")
                 line = line.replace(",", ".")
                 groupdict = re.match(shot_regex_string, line).groupdict()
                 self.result.append(

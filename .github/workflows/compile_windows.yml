@@ -1,11 +1,14 @@
 name: Package Application with PyInstaller
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "*.*.*"
+
 jobs:
   build:
     runs-on: windows-latest
+    permissions:
+      contents: write
     steps:
 
       - name: Checkout repository
@@ -26,11 +29,11 @@ jobs:
         run: |
           pyinstaller auswertung.spec
 
-#      - name: Upload artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: Auswertung
-#          path: dist/auswertung.exe
+      #- name: Upload artifact
+      #  uses: actions/upload-artifact@v4
+      #  with:
+      #    name: Auswertung
+      #    path: dist/auswertung.exe
       - name: Release
         uses: softprops/action-gh-release@v2
         with:

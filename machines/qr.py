@@ -7,9 +7,9 @@ from data.shot import Shot
 import re
 from tkinter import simpledialog
 
-header_regex_string = "\d{8}\w{2}"
+header_regex_string = "\\d{8}\\w{2}"
 shots_regex_string = (
-    "(?P<ring>\D)(?P<tenth>\d)(?P<teiler>\d+)(?P<x>[+-]\d+)(?P<y>[+-]\d+)"
+    "(?P<ring>\\D)(?P<tenth>\\d)(?P<teiler>\\d+)(?P<x>[+-]\\d+)(?P<y>[+-]\\d+)"
 )
 
 

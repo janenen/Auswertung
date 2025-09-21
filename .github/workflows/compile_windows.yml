@@ -1,8 +1,9 @@
 name: Package Application with PyInstaller
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "*.*.*"
+
 jobs:
   build:
     runs-on: windows-latest
@@ -33,7 +34,6 @@ jobs:
       #    path: dist/auswertung.exe
       - name: Release
         uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
         with:
           files: |
             dist/auswertung.exe

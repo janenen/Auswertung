@@ -8,6 +8,7 @@ class TargetCanvas(tk.Canvas):
     def __init__(self, master, width):
         self.width = width
         self.number_font = Font(master, "Helvetica")
+        self.shot_font = Font(master, "Helvetica")
         super().__init__(
             master,
             bg="white",
@@ -90,6 +91,7 @@ class TargetCanvas(tk.Canvas):
         incrementRing = RADIUS_DICT[match.type_of_target][2]
         w = 2 * (radiusTen + 9 * incrementRing)
         scalefactor = self.width / w
+        self.shot_font.configure(size=int(1.5 * radiusCalibre * scalefactor))
         for n, shot in enumerate(match.shots if series < 0 else match.series[series]):
             self.create_oval(
                 (shot.x * 100 - radiusCalibre) * scalefactor + self.width / 2,
@@ -114,7 +116,7 @@ class TargetCanvas(tk.Canvas):
                 shot.x * 100 * scalefactor + self.width / 2,
                 -shot.y * 100 * scalefactor + self.width / 2,
                 fill="black",
-                font=self.number_font,
+                font=self.shot_font,
                 text=str(n + 1),
                 tag="number",
             )

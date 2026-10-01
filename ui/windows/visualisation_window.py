@@ -68,9 +68,9 @@ class CompetitionVisualisationFrame(ttk.Frame):
         self.frame_size = 0
 
         self.match_frames: dict[str, ResultVisualisationFrame] = {}
-        label = ttk.Label(self, text=competition.name)
-
-        label.grid(column=0, row=0)
+        self.title_label = ttk.Label(
+            self, text=competition.name, font=("Helvetica", 25, "bold")
+        )
 
         self.grid(row=0, column=0, sticky="nesw")
 
@@ -85,7 +85,7 @@ class CompetitionVisualisationFrame(ttk.Frame):
         area = 0
         size = 0
         for combination in combinations:
-            max_height = (height / 1.5) / combination[0]
+            max_height = ((height / 1.5) - 45) / combination[0]
             max_width = (width - 20) / combination[1]
             constrian = min(max_height, max_width)
             area0 = constrian * (constrian * 1.5) * k
@@ -93,7 +93,6 @@ class CompetitionVisualisationFrame(ttk.Frame):
                 optimal_combination = combination
                 area = area0
                 size = constrian
-        m = optimal_combination[0]
         n = optimal_combination[1]
         if not size == self.frame_size:
             self.frame_size = size
@@ -109,7 +108,8 @@ class CompetitionVisualisationFrame(ttk.Frame):
             else:
                 self.match_frames[match_id].update_frame()
         for i, frame in enumerate(self.match_frames.items()):
-            frame[1].grid(row=i // n, column=i % n, sticky="nesw")
+            frame[1].grid(row=(i // n) + 1, column=i % n, sticky="nesw")
+        self.title_label.grid(column=0, row=0, columnspan=n)
 
 
 class ResultVisualisationFrame(ttk.Frame):

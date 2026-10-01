@@ -5,7 +5,6 @@ import uuid
 from dataclasses_json import dataclass_json
 from .match import Match
 
-
 SORTING_FUNCTION = {
     "Bestes Ergebnis": {"key": lambda x: x.get_result(), "reverse": True},
     "Bestes Ergebnis Zehntel": {"key": lambda x: x.get_result(True), "reverse": True},

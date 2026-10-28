@@ -1,0 +1,220 @@
+package machine
+
+import (
+	"bytes"
+	"context"
+	"encoding/binary"
+	"fmt"
+	"io"
+	"math"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/janenen/auswertung/internal/model"
+)
+
+// fakeRika simulates the RIKA SAG-2 serial protocol.
+type fakeRika struct {
+	mu      sync.Mutex
+	pending []byte
+	shots   []model.Shot
+	target  string
+	written [][]byte
+	closed  bool
+}
+
+func (f *fakeRika) Write(b []byte) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.written = append(f.written, append([]byte(nil), b...))
+	switch b[0] {
+	case einzel:
+		f.pending = append(f.pending, "200"...)
+	case esc, abm:
+		f.pending = append(f.pending, ack)
+	case syn:
+		if len(f.shots) == 0 {
+			f.pending = append(f.pending, 0)
+			break
+		}
+		s := f.shots[0]
+		f.shots = f.shots[1:]
+		msg := fmt.Sprintf("12345678\r001\r00000000\r%s\r01\r001\r%03d\r%05d\r%+06d\r%+06d\rXX",
+			f.target, int(s.Ringe*10+0.5), int(s.Teiler*10+0.5), int(s.X*100), int(s.Y*100))
+		f.pending = append(f.pending, soh)
+		f.pending = append(f.pending, msg...)
+	}
+	return len(b), nil
+}
+
+func (f *fakeRika) Read(b []byte) (int, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if len(f.pending) == 0 {
+		time.Sleep(time.Millisecond)
+		return 0, nil
+	}
+	n := copy(b, f.pending)
+	f.pending = f.pending[n:]
+	return n, nil
+}
+
+func (f *fakeRika) Close() error { f.closed = true; return nil }
+
+func collect(t *testing.T, m Machine, req Request) ([]Reading, error) {
+	t.Helper()
+	out := make(chan Reading, 100)
+	err := m.Read(context.Background(), req, out)
+	close(out)
+	var readings []Reading
+	for r := range out {
+		readings = append(readings, r)
+	}
+	return readings, err
+}
+
+func TestRika(t *testing.T) {
+	want := []model.Shot{{Ringe: 10.4, Teiler: 132.4, X: 1.25, Y: -0.42}, {Ringe: 9.8, Teiler: 300.1, X: -0.92, Y: 2.85}}
+	fake := &fakeRika{shots: want, target: "LG"}
+	openPort = func(string) (io.ReadWriteCloser, error) { return fake, nil }
+
+	readings, err := collect(t, Rika{Port: "COM9"}, Request{Count: 2, ShotsPerTarget: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(readings) != 2 {
+		t.Fatalf("got %d readings", len(readings))
+	}
+	for i, r := range readings {
+		if r.Shot != want[i] || r.TargetType != "LG" {
+			t.Errorf("reading %d = %+v", i, r)
+		}
+	}
+	if !bytes.Equal(fake.written[1], []byte{esc, 'S', '0', '0', '2', cr}) {
+		t.Errorf("count command = %q", fake.written[1])
+	}
+	if last := fake.written[len(fake.written)-1]; last[0] != abm || !fake.closed {
+		t.Error("reading not terminated with ABM and closed")
+	}
+}
+
+func TestRikaCancel(t *testing.T) {
+	fake := &fakeRika{target: "LG"}
+	openPort = func(string) (io.ReadWriteCloser, error) { return fake, nil }
+	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Millisecond)
+	defer cancel()
+	if err := (Rika{Port: "COM9"}).Read(ctx, Request{Count: 5, ShotsPerTarget: 1}, make(chan Reading)); err != context.DeadlineExceeded {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestSimulator(t *testing.T) {
+	SetSimulator(true)
+	simulatorDelay = 0
+	defer func() { SetSimulator(false); simulatorDelay = 3 }()
+
+	readings, err := collect(t, Rika{Port: SimulatorPort}, Request{Count: 25, ShotsPerTarget: 1, TargetType: "LP"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(readings) != 25 {
+		t.Fatalf("got %d readings", len(readings))
+	}
+	g := model.Targets["LP"]
+	for i, r := range readings {
+		s := r.Shot
+		if r.TargetType != "LP" || s.Ringe < 0 || s.Ringe > 10.9 || s.Teiler > g.Width()/2 {
+			t.Errorf("reading %d = %+v", i, r)
+		}
+		if d := math.Hypot(s.X, s.Y) * 100; math.Abs(d-s.Teiler) > 2 {
+			t.Errorf("reading %d: distance %.1f != Teiler %.1f", i, d, s.Teiler)
+		}
+	}
+}
+
+// Rings and Teiler of a real RIKA result on LG, including tenth boundaries.
+func TestSimRing(t *testing.T) {
+	g := model.Targets["LG"]
+	for _, c := range []struct{ t, want float64 }{
+		{0, 10.9}, {42.8, 10.8}, {71.1, 10.7}, {96.4, 10.6}, {101, 10.6}, {109.9, 10.5}, {129.4, 10.5},
+		{132, 10.4}, {154.3, 10.4}, {231.3, 10}, {252.5, 10}, {265.4, 9.9}, {348.9, 9.6}, {352.3, 9.6},
+		{364.2, 9.5}, {451.3, 9.2}, {529.3, 8.9}, {563.6, 8.7}, {577.8, 8.7}, {592.3, 8.6}, {2505, 0},
+	} {
+		if got := simRing(g, c.t); math.Abs(got-c.want) > 1e-9 {
+			t.Errorf("simRing(%v) = %v, want %v", c.t, got, c.want)
+		}
+	}
+}
+
+// Simulated shooters resemble real results: the sample scored 376 of 400
+// with all shots from 8.6 to 10.8.
+func TestSimulatedShots(t *testing.T) {
+	const shooters, n = 300, 40
+	var total, worst, outliers float64
+	for range shooters {
+		shots := SimulatedShots("LG", n)
+		if len(shots) != n {
+			t.Fatalf("%d shots", len(shots))
+		}
+		sum := float64(shots.SummeGanz())
+		total += sum
+		worst = max(worst, 400-sum)
+		for _, s := range shots {
+			if s.Ringe < 7 {
+				outliers++
+			}
+		}
+	}
+	mean := total / shooters
+	if mean < 365 || mean > 385 {
+		t.Errorf("mean result %.1f, want about 376", mean)
+	}
+	if outliers/(shooters*n) > 0.01 {
+		t.Errorf("%.1f%% of shots below 7", 100*outliers/(shooters*n))
+	}
+	t.Logf("mean %.1f, worst %.0f, below 7: %.2f%%", mean, 400-worst, 100*outliers/(shooters*n))
+}
+
+func TestCSV(t *testing.T) {
+	data := "04.09.2023;3;LG\r10,4;132,4;1,25;-0,42\r9,8;300,1;0,92;-2,85\r"
+	target, shots, err := ParseCSV([]byte(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if target != "LG" || len(shots) != 2 || shots[1] != (model.Shot{Ringe: 9.8, Teiler: 300.1, X: 0.92, Y: -2.85}) {
+		t.Errorf("target=%s shots=%+v", target, shots)
+	}
+	if _, _, err := ParseCSV([]byte("04.09.2023;1;b'LG'\n1;2;3;4\n1;2;3;4\n")); err == nil {
+		t.Error("expected error for too many shots")
+	}
+}
+
+func TestQR(t *testing.T) {
+	// Decimal format as written by the export, and the old integer format.
+	target, shots, err := ParseQR("04092023LGA4132.4+1.25-0.42B8300.1-0.92+2.85")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if target != "LG" || len(shots) != 2 || shots[0] != (model.Shot{Ringe: 10.4, Teiler: 132.4, X: 1.25, Y: -0.42}) || shots[1].Ringe != 9.8 {
+		t.Errorf("target=%s shots=%+v", target, shots)
+	}
+	_, shots, err = ParseQR("04092023LGA41324+125-42")
+	if err != nil || len(shots) != 1 || shots[0].Teiler != 1324 {
+		t.Errorf("int format: %+v %v", shots, err)
+	}
+}
+
+func TestQSD(t *testing.T) {
+	var buf bytes.Buffer
+	binary.Write(&buf, binary.LittleEndian, [5]float64{10.43, 1.25, -0.42, 132.4, 0})
+	binary.Write(&buf, binary.LittleEndian, [5]float64{})
+	binary.Write(&buf, binary.LittleEndian, [5]float64{9, 9, 9, 9, 9})
+	shots, err := ParseQSD(buf.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(shots) != 1 || shots[0] != (model.Shot{Ringe: 10.4, Teiler: 132.4, X: 1.25, Y: -0.42}) {
+		t.Errorf("shots = %+v", shots)
+	}
+}

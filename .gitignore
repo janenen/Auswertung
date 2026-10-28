@@ -1,11 +1,21 @@
-schuetzen.ini
-__pycache__
-ui/frames/__pycache__
+# Runtime data
+db
+dbbackup
 output
-build
-dist
-*.json
+extern
+schuetzen.ini
+/*.json
 *.zip
 *.csv
-db
-extern
+
+# Build output
+/auswertung
+/auswertung.exe
+web/node_modules
+web/dist/*
+!web/dist/.gitkeep
+
+# Leftovers of the former Python version
+__pycache__
+/build
+/dist

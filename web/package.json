@@ -1,0 +1,23 @@
+{
+  "name": "auswertung-web",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "check": "svelte-check --tsconfig ./tsconfig.json"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^6.1.0",
+    "@tsconfig/svelte": "^5.0.4",
+    "@types/d3-contour": "^3.0.6",
+    "svelte": "^5.38.0",
+    "svelte-check": "^4.3.0",
+    "typescript": "~5.9.2",
+    "vite": "^7.1.0"
+  },
+  "dependencies": {
+    "d3-contour": "^4.0.2"
+  }
+}

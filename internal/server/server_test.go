@@ -252,6 +252,54 @@ func TestBoard(t *testing.T) {
 	}
 }
 
+func TestUserMatches(t *testing.T) {
+	ts := newTestServer(t)
+	var user struct{ ID string }
+	var comp struct{ ID string }
+	call(t, ts, "POST", "/api/users", map[string]string{"name": "Anna"}, &user)
+	call(t, ts, "POST", "/api/competitions", map[string]any{
+		"name": "Pokal", "date": "01.02.2026", "count": 1, "shots_per_target": 1, "type_of_target": "LG", "modus": "Bestes Ergebnis",
+	}, &comp)
+	var sess struct{ ID string }
+	for _, req := range []map[string]any{
+		{"competitionId": comp.ID},
+		{"quick": map[string]any{"name": "Zu Hause", "count": 1, "shots_per_target": 1, "type_of_target": "LG", "decimal": true}},
+	} {
+		req["machineId"], req["userId"], req["data"] = "qr", user.ID, []byte("04092023LGA0100.0+0.1+0.2")
+		if code := call(t, ts, "POST", "/api/readings", req, &sess); code != 200 {
+			t.Fatalf("start reading %v: %d", req, code)
+		}
+		readEvents(t, ts, sess.ID)
+	}
+
+	var res struct {
+		User    struct{ Name string }
+		Matches []shooterMatchView
+	}
+	if code := call(t, ts, "GET", "/api/users/"+user.ID+"/matches", nil, &res); code != 200 {
+		t.Fatalf("user matches: %d", code)
+	}
+	if res.User.Name != "Anna" || len(res.Matches) != 2 {
+		t.Fatalf("result = %+v", res)
+	}
+	// Newest first: the quick analysis keeps its title and scoring.
+	quick, entry := res.Matches[0], res.Matches[1]
+	if quick.CompetitionID != "" || quick.Title != "Zu Hause" || !quick.Decimal || quick.Value != "10.0" || quick.Shots != 1 {
+		t.Errorf("quick analysis = %+v", quick)
+	}
+	if entry.CompetitionID != comp.ID || entry.Title != "Pokal" || entry.Decimal || entry.Count != 1 {
+		t.Errorf("competition entry = %+v", entry)
+	}
+	var mv matchView
+	call(t, ts, "GET", "/api/matches/"+quick.MatchID, nil, &mv)
+	if mv.Match.Title != "Zu Hause" || !mv.Match.Decimal {
+		t.Errorf("stored quick analysis = %+v", mv.Match)
+	}
+	if code := call(t, ts, "GET", "/api/users/nope/matches", nil, nil); code != 404 {
+		t.Errorf("unknown user: %d", code)
+	}
+}
+
 func TestSimulateLeague(t *testing.T) {
 	ts := newTestServer(t)
 	var home, guest, team, league struct{ ID string }

@@ -10,7 +10,8 @@ export const en = {
   'Auswertung beendet': 'Auswertung stopped',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'The program has been stopped. You can close this window.',
-  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm': 'Open the visualisation window, e.g. for a second screen',
+  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm':
+    'Open the visualisation window, e.g. for a second screen',
   Visualisierung: 'Visualisation',
   'Programm beenden': 'Quit program',
   'Server nicht erreichbar: {error}': 'Server not reachable: {error}',
@@ -75,6 +76,18 @@ export const en = {
   Geburtsdatum: 'Date of birth',
   Ergebnisse: 'Results',
   'Keine Einträge.': 'No entries.',
+
+  // shooter results
+  'Ergebnisse anzeigen': 'Show results',
+  'Zum Schützen': 'To shooter',
+  '{n} Ergebnis': '{n} result',
+  '{n} Ergebnisse': '{n} results',
+  Art: 'Kind',
+  'Alle Ergebnisse': 'All results',
+  Schnellauswertungen: 'Quick analyses',
+  'Alle Disziplinen': 'All disciplines',
+  'Noch keine Ergebnisse.': 'No results yet.',
+  'Keine Ergebnisse für diese Auswahl.': 'No results for this selection.',
 
   // competition form
   'Neuer Wettkampf': 'New competition',

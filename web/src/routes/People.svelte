@@ -2,6 +2,7 @@
   // Master data: shooters, clubs and teams.
   import { api, type Named, type UserSummary } from '../lib/api'
   import { t, tx } from '../lib/i18n.svelte'
+  import { href } from '../lib/router.svelte'
 
   type Tab = 'users' | 'clubs' | 'teams'
   let tab = $state<Tab>('users')
@@ -98,10 +99,12 @@
             {@render form()}
           {:else}
             <tr>
-              <td>{r.name}</td>
               {#if tab === 'users'}
+                <td><a href={href(`/people/${r.id}`)} title={t('Ergebnisse anzeigen')}>{r.name}</a></td>
                 <td>{r.birthday}</td>
-                <td class="num">{r.matchCount ?? 0}</td>
+                <td class="num"><a href={href(`/people/${r.id}`)}>{r.matchCount ?? 0}</a></td>
+              {:else}
+                <td>{r.name}</td>
               {/if}
               <td class="num">
                 <button onclick={() => (editing = { id: r.id, name: r.name, birthday: r.birthday ?? '' })}

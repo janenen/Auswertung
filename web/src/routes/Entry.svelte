@@ -20,6 +20,7 @@
           count: Number(query.count) || 40,
           shots_per_target: Number(query.spt) || 1,
           type_of_target: query.target || 'LG',
+          decimal: query.decimal === 'true',
         }
       : undefined,
   )

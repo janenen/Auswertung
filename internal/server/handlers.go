@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cmp"
 	"fmt"
 	"log"
 	"net/http"
@@ -49,6 +50,66 @@ func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
 		out[i] = userView{u, counts[u.ID]}
 	}
 	writeJSON(w, out)
+}
+
+// shooterMatchView is one result in the list of a shooter.
+type shooterMatchView struct {
+	entryView
+	// CompetitionID is empty for a quick analysis; Title is the competition
+	// name or the quick analysis title.
+	CompetitionID string `json:"competitionId"`
+	Title         string `json:"title"`
+	TypeOfTarget  string `json:"typeOfTarget"`
+	Decimal       bool   `json:"decimal"`
+	// Count is the competition's number of shots, 0 for a quick analysis.
+	Count int `json:"count"`
+}
+
+// userMatches returns a shooter with all results, newest first.
+func (s *Server) userMatches(w http.ResponseWriter, r *http.Request) {
+	u, err := s.store.User(r.PathValue("id"))
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	matches, err := s.store.UserMatches(u.ID)
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	comps := map[string]model.Competition{}
+	out := []shooterMatchView{}
+	for _, m := range slices.Backward(matches) {
+		c, title := model.Competition{Decimal: m.Decimal, Modus: model.ModusBest}, cmp.Or(m.Title, "Schnellauswertung")
+		if m.Decimal {
+			c.Modus = model.ModusBestDecimal
+		}
+		if m.Competition != "" {
+			if _, ok := comps[m.Competition]; !ok {
+				if comps[m.Competition], err = s.store.Competition(m.Competition); err != nil {
+					fail(w, err)
+					return
+				}
+			}
+			c = comps[m.Competition]
+			title = c.Name
+		}
+		out = append(out, shooterMatchView{
+			entryView: s.entry(c, m), CompetitionID: m.Competition, Title: title,
+			TypeOfTarget: m.TypeOfTarget, Decimal: c.Decimal, Count: c.Count,
+		})
+	}
+	// Recording order is chronological except for imported data.
+	slices.SortStableFunc(out, func(a, b shooterMatchView) int { return cmp.Compare(sortDate(b.Date), sortDate(a.Date)) })
+	writeJSON(w, map[string]any{"user": u, "matches": out})
+}
+
+// sortDate makes DD.MM.YYYY sortable.
+func sortDate(d string) string {
+	if t, err := time.Parse("02.01.2006", d); err == nil {
+		return t.Format("2006-01-02")
+	}
+	return d
 }
 
 func (s *Server) listClubs(w http.ResponseWriter, r *http.Request) {

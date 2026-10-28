@@ -1,6 +1,7 @@
 package store
 
 import (
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"os"
@@ -98,6 +99,38 @@ func TestRecordMatchFlow(t *testing.T) {
 	}
 	if c2, _ := s.Competition(c.ID); c2.Date != "01.02.2024" || !c2.Active {
 		t.Errorf("competition = %+v", c2)
+	}
+}
+
+// A database of an older schema version is upgraded on open.
+func TestSchemaUpgrade(t *testing.T) {
+	dir := t.TempDir()
+	db, err := sql.Open("sqlite", filepath.Join(dir, DBFile))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		migrations[0], "PRAGMA user_version = 1",
+		"INSERT INTO users (id, name) VALUES ('u1', 'Anna')",
+		"INSERT INTO matches (id, shooter_id, target_type, date, active) VALUES ('m1', 'u1', 'LG', '2025-01-02', 0)",
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatal(err)
+		}
+	}
+	db.Close()
+
+	s := open(t, dir)
+	m, err := s.Match("m1")
+	if err != nil || m.Title != "" || m.Decimal || m.Date != "02.01.2025" {
+		t.Fatalf("match = %+v, %v", m, err)
+	}
+	quick, err := s.RecordNewMatch(NewMatch{Shooter: "u1", Title: "Zu Hause", Decimal: true, Count: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ms, _ := s.UserMatches("u1"); len(ms) != 2 || ms[1].ID != quick.ID || ms[1].Title != "Zu Hause" || !ms[1].Decimal {
+		t.Errorf("user matches = %+v", ms)
 	}
 }
 

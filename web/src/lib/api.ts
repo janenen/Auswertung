@@ -127,8 +127,10 @@ export interface MatchView {
     active: boolean
     club: string
     team: string
-    /** Empty for a quick analysis. */
+    /** Empty for a quick analysis, which has its own title and scoring. */
     competition: string
+    title: string
+    decimal: boolean
   }
   shooter: string
   club: string
@@ -167,6 +169,20 @@ export interface QuickSettings {
   count: number
   shots_per_target: number
   type_of_target: string
+  /** Scoring in tenths. */
+  decimal: boolean
+}
+
+/** One result in the list of a shooter. */
+export interface ShooterMatch extends Entry {
+  /** Empty for a quick analysis. */
+  competitionId: string
+  /** Competition name or quick analysis title. */
+  title: string
+  typeOfTarget: string
+  decimal: boolean
+  /** Shots of the competition, 0 for a quick analysis. */
+  count: number
 }
 
 export interface ReadingEvent {
@@ -219,6 +235,7 @@ export const api = {
   meta: () => get<Meta>('/meta'),
 
   users: () => get<UserSummary[]>('/users'),
+  userMatches: (id: string) => get<{ user: User; matches: ShooterMatch[] }>(`/users/${id}/matches`),
   saveUser: (u: Partial<User>) =>
     u.id ? request<User>('PUT', `/users/${u.id}`, u) : request<User>('POST', '/users', u),
   clubs: () => get<Named[]>('/clubs'),

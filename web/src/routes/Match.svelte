@@ -15,21 +15,24 @@
   let selected = $state(-1)
   let qrFailed = $state(false)
 
+  // The competition comes from the query or the match itself; a quick
+  // analysis has its title and scoring stored with the match.
+  const competitionId = $derived(query.competition || view?.match.competition || '')
   $effect(() => {
     api
       .match(id)
-      .then((v) => (view = v))
+      .then(async (v) => {
+        view = v
+        const cid = query.competition || v.match.competition
+        if (cid) competition = (await api.competition(cid)).competition
+      })
       .catch((e) => (error = e.message))
-    if (query.competition) {
-      api
-        .competition(query.competition)
-        .then((v) => (competition = v.competition))
-        .catch((e) => (error = e.message))
-    }
   })
 
-  const decimal = $derived(competition ? competition.decimal : query.decimal === 'true')
-  const title = $derived(competition?.name ?? query.title ?? 'Schnellauswertung')
+  const decimal = $derived(
+    competition ? competition.decimal : query.decimal ? query.decimal === 'true' : (view?.match.decimal ?? false),
+  )
+  const title = $derived(competition?.name ?? query.title ?? (view?.match.title || 'Schnellauswertung'))
   const shots = $derived(
     view ? (series < 0 ? view.match.shots : view.match.shots.slice(series * 10, series * 10 + 10)) : [],
   )
@@ -55,7 +58,7 @@
   // CSV export is hidden for now; the endpoint stays available.
   const csvExport = false
   const reportQuery = $derived<Record<string, string>>(
-    query.competition ? { competition: query.competition } : { title, decimal: String(decimal) },
+    competitionId ? { competition: competitionId } : { title, decimal: String(decimal) },
   )
   const qs = (q: Record<string, string>) => new URLSearchParams(q).toString()
 
@@ -90,12 +93,15 @@
     {#if csvExport}
       <a class="button" href="/api/matches/{id}/export.csv">{t('CSV erzeugen')}</a>
     {/if}
-    {#if query.competition}
-      <a class="button" href={href(`/competitions/${query.competition}`)}>{t('Zum Wettkampf')}</a>
-      {#if competition?.active}
-        <a class="button" href={href(`/competitions/${query.competition}/entry`)}>{t('+ Nächster Beitrag')}</a>
+    {#if query.shooter}
+      <a class="button" href={href(`/people/${query.shooter}`)}>{t('Zum Schützen')}</a>
+    {/if}
+    {#if competitionId}
+      <a class="button" href={href(`/competitions/${competitionId}`)}>{t('Zum Wettkampf')}</a>
+      {#if competition?.active && !query.shooter}
+        <a class="button" href={href(`/competitions/${competitionId}/entry`)}>{t('+ Nächster Beitrag')}</a>
       {/if}
-    {:else}
+    {:else if !query.shooter}
       <a class="button" href={href('/')}>{t('Zur Übersicht')}</a>
     {/if}
   </div>

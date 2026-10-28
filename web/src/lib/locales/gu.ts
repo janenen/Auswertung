@@ -11,7 +11,8 @@ export const gu: Record<Key, string> = {
   'Auswertung beendet': 'Auswertung બંધ થયું',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'પ્રોગ્રામ બંધ કરવામાં આવ્યો છે. તમે આ વિન્ડો બંધ કરી શકો છો.',
-  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm': 'વિઝ્યુઅલાઇઝેશન વિન્ડો ખોલો, દા.ત. બીજી સ્ક્રીન માટે',
+  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm':
+    'વિઝ્યુઅલાઇઝેશન વિન્ડો ખોલો, દા.ત. બીજી સ્ક્રીન માટે',
   Visualisierung: 'વિઝ્યુઅલાઇઝેશન',
   'Programm beenden': 'પ્રોગ્રામ બંધ કરો',
   'Server nicht erreichbar: {error}': 'સર્વર સુધી પહોંચી શકાતું નથી: {error}',
@@ -76,6 +77,18 @@ export const gu: Record<Key, string> = {
   Geburtsdatum: 'જન્મતારીખ',
   Ergebnisse: 'પરિણામો',
   'Keine Einträge.': 'કોઈ એન્ટ્રી નથી.',
+
+  // shooter results
+  'Ergebnisse anzeigen': 'પરિણામો બતાવો',
+  'Zum Schützen': 'શૂટર પર જાઓ',
+  '{n} Ergebnis': '{n} પરિણામ',
+  '{n} Ergebnisse': '{n} પરિણામો',
+  Art: 'પ્રકાર',
+  'Alle Ergebnisse': 'બધાં પરિણામો',
+  Schnellauswertungen: 'ઝડપી મૂલ્યાંકનો',
+  'Alle Disziplinen': 'બધી શાખાઓ',
+  'Noch keine Ergebnisse.': 'હજુ સુધી કોઈ પરિણામ નથી.',
+  'Keine Ergebnisse für diese Auswahl.': 'આ પસંદગી માટે કોઈ પરિણામ નથી.',
 
   // competition form
   'Neuer Wettkampf': 'નવી સ્પર્ધા',

@@ -403,7 +403,7 @@ func (s *Store) DeleteCompetition(id string) error {
 // --- matches ---
 
 const matchColumns = `id, shooter_id, COALESCE(club_id, ''), COALESCE(team_id, ''), COALESCE(competition_id, ''),
-	target_type, date, active FROM matches`
+	target_type, date, active, title, decimal FROM matches`
 
 // matches loads the matches selected by where (with args) in recording
 // order, including their shots.
@@ -417,7 +417,8 @@ func (s *Store) matches(where string, args ...any) ([]model.Match, error) {
 	index := map[string]int{}
 	for rows.Next() {
 		m := model.Match{Shots: model.Shots{}}
-		if err := rows.Scan(&m.ID, &m.Shooter, &m.Club, &m.Team, &m.Competition, &m.TypeOfTarget, &m.Date, &m.Active); err != nil {
+		if err := rows.Scan(&m.ID, &m.Shooter, &m.Club, &m.Team, &m.Competition, &m.TypeOfTarget, &m.Date, &m.Active,
+			&m.Title, &m.Decimal); err != nil {
 			return nil, err
 		}
 		m.Date = displayDate(m.Date)
@@ -461,11 +462,19 @@ func (s *Store) CompetitionMatches(competition string) ([]model.Match, error) {
 	return s.matches("competition_id = ?", competition)
 }
 
+// UserMatches returns all matches of a shooter in recording order.
+func (s *Store) UserMatches(user string) ([]model.Match, error) {
+	return s.matches("shooter_id = ?", user)
+}
+
 // NewMatch describes the result of a reading that starts a new match.
 type NewMatch struct {
 	Shooter, Club, Team, TypeOfTarget string
-	// Competition is empty for a quick analysis.
+	// Competition is empty for a quick analysis, which has a Title and
+	// Decimal scoring instead.
 	Competition string
+	Title       string
+	Decimal     bool
 	// Count is the number of shots after which the match is complete.
 	Count int
 	Shots model.Shots
@@ -477,13 +486,14 @@ func (s *Store) RecordNewMatch(n NewMatch) (model.Match, error) {
 	m := model.Match{
 		ID: newID(), Shooter: n.Shooter, Club: n.Club, Team: n.Team, Competition: n.Competition,
 		TypeOfTarget: n.TypeOfTarget, Date: now.Format(displayLayout), Active: len(n.Shots) < n.Count,
-		Shots: append(model.Shots{}, n.Shots...),
+		Title: n.Title, Decimal: n.Decimal, Shots: append(model.Shots{}, n.Shots...),
 	}
 	err := s.tx(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`INSERT INTO matches
-			(id, shooter_id, competition_id, club_id, team_id, target_type, date, active)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-			m.ID, m.Shooter, null(m.Competition), null(m.Club), null(m.Team), m.TypeOfTarget, now.Format(isoLayout), m.Active); err != nil {
+			(id, shooter_id, competition_id, club_id, team_id, target_type, date, active, title, decimal)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			m.ID, m.Shooter, null(m.Competition), null(m.Club), null(m.Team), m.TypeOfTarget, now.Format(isoLayout), m.Active,
+			m.Title, m.Decimal); err != nil {
 			return referenceError(err, n)
 		}
 		return insertShots(tx, m.ID, 0, m.Shots)

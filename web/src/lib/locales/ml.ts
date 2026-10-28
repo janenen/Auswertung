@@ -11,7 +11,8 @@ export const ml: Record<Key, string> = {
   'Auswertung beendet': 'Auswertung നിർത്തി',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'പ്രോഗ്രാം നിർത്തിയിരിക്കുന്നു. ഈ വിൻഡോ അടയ്ക്കാം.',
-  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm': 'വിഷ്വലൈസേഷൻ വിൻഡോ തുറക്കുക, ഉദാ. രണ്ടാമത്തെ സ്ക്രീനിനായി',
+  'Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm':
+    'വിഷ്വലൈസേഷൻ വിൻഡോ തുറക്കുക, ഉദാ. രണ്ടാമത്തെ സ്ക്രീനിനായി',
   Visualisierung: 'വിഷ്വലൈസേഷൻ',
   'Programm beenden': 'പ്രോഗ്രാം നിർത്തുക',
   'Server nicht erreichbar: {error}': 'സെർവറിൽ എത്താനാകുന്നില്ല: {error}',
@@ -76,6 +77,18 @@ export const ml: Record<Key, string> = {
   Geburtsdatum: 'ജനനത്തീയതി',
   Ergebnisse: 'ഫലങ്ങൾ',
   'Keine Einträge.': 'എൻട്രികളില്ല.',
+
+  // shooter results
+  'Ergebnisse anzeigen': 'ഫലങ്ങൾ കാണിക്കുക',
+  'Zum Schützen': 'ഷൂട്ടറിലേക്ക്',
+  '{n} Ergebnis': '{n} ഫലം',
+  '{n} Ergebnisse': '{n} ഫലങ്ങൾ',
+  Art: 'തരം',
+  'Alle Ergebnisse': 'എല്ലാ ഫലങ്ങളും',
+  Schnellauswertungen: 'ദ്രുത വിശകലനങ്ങൾ',
+  'Alle Disziplinen': 'എല്ലാ വിഭാഗങ്ങളും',
+  'Noch keine Ergebnisse.': 'ഇതുവരെ ഫലങ്ങളില്ല.',
+  'Keine Ergebnisse für diese Auswahl.': 'ഈ തിരഞ്ഞെടുപ്പിന് ഫലങ്ങളില്ല.',
 
   // competition form
   'Neuer Wettkampf': 'പുതിയ മത്സരം',

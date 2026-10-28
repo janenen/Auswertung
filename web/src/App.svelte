@@ -13,6 +13,7 @@
   import Results from './routes/Results.svelte'
   import Archive from './routes/Archive.svelte'
   import People from './routes/People.svelte'
+  import Shooter from './routes/Shooter.svelte'
   import Board from './routes/Board.svelte'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -27,6 +28,7 @@
     ['/matches/:id', Match],
     ['/archive', Archive],
     ['/people', People],
+    ['/people/:id', Shooter],
   ]
 
   const current = $derived.by(() => {
@@ -69,7 +71,9 @@
       ? '/'
       : route.path === '/entry'
         ? '/quick'
-        : route.path,
+        : route.path.startsWith('/people')
+          ? '/people'
+          : route.path,
   )
 </script>
 

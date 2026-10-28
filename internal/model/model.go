@@ -97,8 +97,12 @@ type Match struct {
 	// Date is formatted as DD.MM.YYYY.
 	Date string `json:"date"`
 	// Active marks an incomplete match that can be continued.
-	Active bool  `json:"active"`
-	Shots  Shots `json:"shots"`
+	Active bool `json:"active"`
+	// Title and Decimal (scoring in tenths) are set for quick analyses;
+	// matches of a competition use the competition's.
+	Title   string `json:"title"`
+	Decimal bool   `json:"decimal"`
+	Shots   Shots  `json:"shots"`
 }
 
 type User struct {

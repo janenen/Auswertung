@@ -41,6 +41,7 @@ func (s *Server) routes(frontend fs.FS) http.Handler {
 	mux.HandleFunc("GET /api/users", s.listUsers)
 	mux.HandleFunc("POST /api/users", s.saveUser)
 	mux.HandleFunc("PUT /api/users/{id}", s.saveUser)
+	mux.HandleFunc("GET /api/users/{id}/matches", s.userMatches)
 	mux.HandleFunc("GET /api/clubs", s.listClubs)
 	mux.HandleFunc("POST /api/clubs", s.saveClub)
 	mux.HandleFunc("PUT /api/clubs/{id}", s.saveClub)

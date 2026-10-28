@@ -1,10 +1,12 @@
 package server
 
 import (
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/janenen/auswertung/internal/machine"
@@ -60,8 +62,8 @@ func (s *Server) getMatch(w http.ResponseWriter, r *http.Request) {
 }
 
 // matchInfo resolves the title and scoring of a match report from the
-// competition query parameter, the title/decimal parameters of a quick
-// analysis, or the first competition of the match.
+// competition query parameter, the title/decimal parameters, or else the
+// match's competition or stored quick analysis settings.
 func (s *Server) matchInfo(r *http.Request) (report.MatchInfo, error) {
 	m, err := s.store.Match(r.PathValue("id"))
 	if err != nil {
@@ -81,10 +83,11 @@ func (s *Server) matchInfo(r *http.Request) (report.MatchInfo, error) {
 		}
 		info.Title, info.Decimal = c.Name, c.Decimal
 	} else {
-		if t := q.Get("title"); t != "" {
-			info.Title = t
+		info.Title = cmp.Or(q.Get("title"), m.Title, info.Title)
+		info.Decimal = m.Decimal
+		if d := q.Get("decimal"); d != "" {
+			info.Decimal = d == "true"
 		}
-		info.Decimal = q.Get("decimal") == "true"
 	}
 	return info, nil
 }
@@ -154,6 +157,7 @@ type quickSettings struct {
 	Count          int    `json:"count"`
 	ShotsPerTarget int    `json:"shots_per_target"`
 	TypeOfTarget   string `json:"type_of_target"`
+	Decimal        bool   `json:"decimal"`
 }
 
 type startReadingRequest struct {
@@ -235,7 +239,7 @@ func (s *Server) readingParams(req startReadingRequest) (reading.Params, error) 
 		p.Request = machine.Request{Count: c.Count, ShotsPerTarget: c.ShotsPerTarget}
 		p.ExpectedTarget = c.TypeOfTarget
 		p.Tag = reading.Tag{CompetitionID: c.ID, ShooterID: req.UserID}
-		p.Finish = s.recordNew(req, c.ID, c.Count)
+		p.Finish = s.recordNew(req, store.NewMatch{Competition: c.ID, Count: c.Count})
 
 	case req.Quick != nil:
 		q := req.Quick
@@ -250,7 +254,7 @@ func (s *Server) readingParams(req startReadingRequest) (reading.Params, error) 
 		}
 		p.Request = machine.Request{Count: q.Count, ShotsPerTarget: q.ShotsPerTarget}
 		p.ExpectedTarget = q.TypeOfTarget
-		p.Finish = s.recordNew(req, "", q.Count)
+		p.Finish = s.recordNew(req, store.NewMatch{Title: strings.TrimSpace(q.Name), Decimal: q.Decimal, Count: q.Count})
 
 	default:
 		return p, errBadRequest("Wettkampf oder Schnellauswertung angeben")
@@ -260,12 +264,12 @@ func (s *Server) readingParams(req startReadingRequest) (reading.Params, error) 
 	return p, nil
 }
 
-func (s *Server) recordNew(req startReadingRequest, competitionID string, count int) reading.FinishFunc {
+// recordNew saves a new match of the requesting shooter; n holds the
+// competition or quick analysis settings.
+func (s *Server) recordNew(req startReadingRequest, n store.NewMatch) reading.FinishFunc {
 	return func(shots model.Shots, targetType string) (string, error) {
-		m, err := s.store.RecordNewMatch(store.NewMatch{
-			Shooter: req.UserID, Club: req.ClubID, Team: req.TeamID, TypeOfTarget: targetType,
-			Competition: competitionID, Count: count, Shots: shots,
-		})
+		n.Shooter, n.Club, n.Team, n.TypeOfTarget, n.Shots = req.UserID, req.ClubID, req.TeamID, targetType, shots
+		m, err := s.store.RecordNewMatch(n)
 		return m.ID, err
 	}
 }

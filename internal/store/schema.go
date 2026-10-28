@@ -72,4 +72,9 @@ CREATE TABLE shots (
 	PRIMARY KEY (match_id, idx)
 ) WITHOUT ROWID;
 `,
+	// 2: title and scoring of quick analyses, which have no competition.
+	`
+ALTER TABLE matches ADD COLUMN title TEXT NOT NULL DEFAULT '';
+ALTER TABLE matches ADD COLUMN decimal INTEGER NOT NULL DEFAULT 0;
+`,
 }

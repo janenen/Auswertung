@@ -133,11 +133,17 @@ func TestReadingFlow(t *testing.T) {
 		t.Errorf("wrong target saved: %v", events)
 	}
 
+	// The QR code is not saved, so it has no file name.
+	if resp, err := http.Get(ts.URL + "/api/matches/" + matchID + "/qr.png"); err != nil || resp.StatusCode != 200 || resp.Header.Get("Content-Disposition") != "" {
+		t.Errorf("QR code: %v %v", resp, err)
+	} else {
+		resp.Body.Close()
+	}
+
 	for _, path := range []string{
 		"/api/matches/" + matchID + "/report.pdf",
 		"/api/matches/" + matchID + "/report.pdf?title=Test&decimal=true",
 		"/api/matches/" + matchID + "/export.csv",
-		"/api/matches/" + matchID + "/qr.png",
 		"/api/competitions/" + comp.ID + "/report.pdf",
 	} {
 		if code := call(t, ts, "GET", path, nil, nil); code != 200 {

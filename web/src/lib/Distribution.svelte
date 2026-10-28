@@ -1,10 +1,12 @@
 <script lang="ts">
-  // Shot distribution: 2D kernel density (filled contours, one-hue ramp)
-  // with shot positions, and box plots of x (top) and y (right).
-  // Port of the seaborn JointGrid of the Python version.
-  import { contourDensity } from 'd3-contour'
+  // Shot distribution: filled 2D kernel density with target rings and box
+  // plots of x (top) and y (right), next to a table of the box plot values.
+  // Recreates the seaborn JointGrid of the Python version (kdeplot fill,
+  // bw_adjust=0.5, boxplot with median and mean line) in the app's colors.
+  import { contours as d3contours } from 'd3-contour'
   import type { Shot } from './api'
   import { meta, fmt2 } from './meta.svelte'
+  import { t } from './i18n.svelte'
 
   let { shots, type, filename = 'verteilung.svg' }: { shots: Shot[]; type: string; filename?: string } = $props()
 
@@ -18,23 +20,79 @@
   const H = top + S + bottom
   const band = 34 // box plot height
 
-  // Sequential blue ramp (low → high density); dark mode uses its own steps.
-  const lightRamp = ['#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7', '#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281']
-  const darkRamp = ['#104281', '#184f95', '#1c5cab', '#256abf', '#2a78d6', '#3987e5', '#5598e7', '#6da7ec', '#86b6ef', '#9ec5f4', '#b7d3f6', '#cde2fb']
-
-  // Colors are resolved to literals so a downloaded SVG looks the same.
-  let colors = $state({ ink: '#1c2430', muted: '#5f6b7a', grid: '#d6dce3', surface: '#ffffff', dark: false })
+  // Theme colors, resolved to literals so a downloaded SVG looks the same.
+  const fallback = { surface: '#ffffff', text: '#1c2430', muted: '#5f6b7a', border: '#d6dce3', accent: '#1f6feb', danger: '#c62828' }
+  let theme = $state(fallback)
   $effect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
     const read = () => {
       const css = getComputedStyle(document.documentElement)
-      const v = (name: string) => css.getPropertyValue(name).trim()
-      colors = { ink: v('--text'), muted: v('--muted'), grid: v('--border'), surface: v('--surface'), dark: mq.matches }
+      const v = (name: keyof typeof fallback) => {
+        const raw = css.getPropertyValue(`--${name}`).trim()
+        return parseColor(raw) ? raw : fallback[name]
+      }
+      theme = { surface: v('surface'), text: v('text'), muted: v('muted'), border: v('border'), accent: v('accent'), danger: v('danger') }
     }
     read()
     mq.addEventListener('change', read)
     return () => mq.removeEventListener('change', read)
   })
+
+  // Colors are interpolated in OKLab so the density levels get even steps
+  // of lightness, which keeps groupings of shots distinguishable.
+  type Lab = [number, number, number]
+  function parseColor(css: string): [number, number, number] | null {
+    const s = css.trim()
+    const hex = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(s)?.[1]
+    if (hex) {
+      const full = hex.length === 3 ? [...hex].map((c) => c + c).join('') : hex
+      return [0, 2, 4].map((i) => parseInt(full.slice(i, i + 2), 16) / 255) as [number, number, number]
+    }
+    const rgb = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/.exec(s)
+    return rgb ? [Number(rgb[1]) / 255, Number(rgb[2]) / 255, Number(rgb[3]) / 255] : null
+  }
+  function toLab(css: string): Lab {
+    const [r, g, b] = (parseColor(css) ?? [0, 0, 0]).map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4))
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+    return [
+      0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    ]
+  }
+  function fromLab([L, A, B]: Lab): string {
+    const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3
+    const m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3
+    const s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3
+    const rgb = [
+      4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+      -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+      -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s,
+    ]
+    const hex = (c: number) => {
+      const v = c <= 0.0031308 ? 12.92 * c : 1.055 * c ** (1 / 2.4) - 0.055
+      return Math.round(Math.min(1, Math.max(0, v)) * 255)
+        .toString(16)
+        .padStart(2, '0')
+    }
+    return '#' + rgb.map(hex).join('')
+  }
+  const mix = (a: Lab, b: Lab, f: number): Lab => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f]
+
+  // Sequential ramp: a faint accent tint for low density, the accent in the
+  // middle and a deep (light theme) or bright (dark theme) accent for the
+  // densest groups – the text color gives the direction in both themes.
+  const ramp = $derived.by(() => {
+    const surface = toLab(theme.surface)
+    const accent = toLab(theme.accent)
+    const low = mix(surface, accent, 0.3)
+    const high = mix(accent, toLab(theme.text), 0.6)
+    return (x: number) => fromLab(x < 0.5 ? mix(low, accent, x * 2) : mix(accent, high, (x - 0.5) * 2))
+  })
+  const legendRamp = $derived(Array.from({ length: 9 }, (_, i) => ramp(i / 8)).join(', '))
+  const boxFill = $derived(fromLab(mix(toLab(theme.surface), toLab(theme.accent), 0.35)))
 
   const g = $derived(meta.targets[type])
   const lim = $derived(
@@ -86,27 +144,88 @@
   const xs = $derived(enough ? summarize(shots.map((s) => s.x)) : null)
   const ys = $derived(enough ? summarize(shots.map((s) => s.y)) : null)
 
-  const contours = $derived.by(() => {
-    if (!enough) return []
-    // Scott's rule with seaborn's bw_adjust = 0.5.
-    const sd = (v: number[]) => {
-      const m = v.reduce((a, b) => a + b, 0) / v.length
-      return Math.sqrt(v.reduce((a, b) => a + (b - m) ** 2, 0) / (v.length - 1))
+  // Density as scipy's gaussian_kde: full covariance scaled by Scott's
+  // factor n^(-1/6) and seaborn's bw_adjust 0.5, evaluated on a 200² grid
+  // reaching 3 bandwidths beyond the data (seaborn's cut=3).
+  const N = 200
+  const density = $derived.by(() => {
+    if (!enough) return null
+    const n = shots.length
+    const mx = shots.reduce((a, s) => a + s.x, 0) / n
+    const my = shots.reduce((a, s) => a + s.y, 0) / n
+    let cxx = 0
+    let cyy = 0
+    let cxy = 0
+    for (const s of shots) {
+      cxx += (s.x - mx) ** 2
+      cyy += (s.y - my) ** 2
+      cxy += (s.x - mx) * (s.y - my)
     }
-    const sigma = (sd(shots.map((s) => s.x)) + sd(shots.map((s) => s.y))) / 2
-    const bandwidth = Math.max(0.5 * Math.pow(shots.length, -1 / 6) * sigma * unit, 6)
-    const result = contourDensity<Shot>()
-      .x((s) => sx(s.x))
-      .y((s) => sy(s.y))
-      .size([S, S])
-      .cellSize(2)
-      .bandwidth(bandwidth)
-      .thresholds(8)(shots)
-    return result.slice(1) // drop the faint outermost level (seaborn thresh)
+    const f2 = (0.5 * Math.pow(n, -1 / 6)) ** 2
+    // A minimum spread keeps identical shots from collapsing the kernel.
+    const floor = 0.01
+    let a = Math.max((cxx / (n - 1)) * f2, floor)
+    let d = Math.max((cyy / (n - 1)) * f2, floor)
+    let b = (cxy / (n - 1)) * f2
+    let det = a * d - b * b
+    if (det <= floor * floor) {
+      b = 0
+      det = a * d
+    }
+    const ia = d / det
+    const ib = -b / det
+    const id = a / det
+    const reach = 3 * Math.sqrt(Math.max(a, d))
+    const L = Math.max(lim, ...shots.map((s) => Math.max(Math.abs(s.x), Math.abs(s.y)) + reach))
+    const cell = (2 * L) / N
+    const values = new Float64Array(N * N)
+    for (let j = 0; j < N; j++) {
+      const y = L - (j + 0.5) * cell
+      for (let i = 0; i < N; i++) {
+        const x = -L + (i + 0.5) * cell
+        let v = 0
+        for (const s of shots) {
+          const dx = x - s.x
+          const dy = y - s.y
+          v += Math.exp(-0.5 * (ia * dx * dx + 2 * ib * dx * dy + id * dy * dy))
+        }
+        values[j * N + i] = v
+      }
+    }
+    return { values, L }
   })
 
-  const ramp = $derived(colors.dark ? darkRamp : lightRamp)
-  const levelColor = (i: number, n: number) => ramp[Math.round((n <= 1 ? 1 : i / (n - 1)) * (ramp.length - 1))]
+  // seaborn's levels=10, thresh=0.05: density levels enclosing 95 % … 0 %
+  // of the probability mass, filled from the lowest to the highest color.
+  const layers = $derived.by(() => {
+    if (!density) return []
+    const sorted = Array.from(density.values).sort((p, q) => q - p)
+    const total = sorted.reduce((p, q) => p + q, 0)
+    const cum: number[] = []
+    let acc = 0
+    for (const v of sorted) cum.push((acc += v) / total)
+    const levels = Array.from({ length: 10 }, (_, k) => {
+      const iso = 0.05 + (k * 0.95) / 9
+      const idx = cum.findIndex((c) => c >= 1 - iso)
+      return sorted[Math.max(idx, 0)]
+    })
+    const bands = levels.length - 1
+    return d3contours()
+      .size([N, N])
+      .thresholds(levels.slice(0, bands))(Array.from(density.values))
+      .map((c, k) => ({ d: path(c), color: ramp(bands > 1 ? k / (bands - 1) : 1) }))
+  })
+
+  const rings = $derived(
+    g
+      ? Array.from({ length: 10 }, (_, i) => (g.radiusTen + i * g.ringIncrement) / 100).filter((r) => r < lim * 1.42)
+      : [],
+  )
+
+  // Grid coordinates [0, N] → plot pixels.
+  const gridTransform = $derived(
+    density ? `translate(${sx(-density.L)},${sy(density.L)}) scale(${((2 * density.L) / N) * unit})` : '',
+  )
 
   function path(geometry: { coordinates: number[][][][] }) {
     return geometry.coordinates
@@ -121,12 +240,6 @@
     return out
   })
 
-  const rings = $derived(
-    g
-      ? Array.from({ length: 10 }, (_, i) => (g.radiusTen + i * g.ringIncrement) / 100).filter((r) => r < lim * 1.42)
-      : [],
-  )
-
   // Tooltip
   let tip = $state<{ x: number; y: number; lines: string[] } | null>(null)
   let wrap: HTMLDivElement | undefined = $state()
@@ -136,13 +249,12 @@
     tip = { x: target.left + target.width / 2 - box.left, y: target.top - box.top, lines }
   }
   const boxLines = (axis: string, s: Summary) => [
-    `${axis}`,
-    `Median ${fmt2(s.median)} mm · Mittelwert ${fmt2(s.mean)} mm`,
-    `Quartile ${fmt2(s.q1)} – ${fmt2(s.q3)} mm`,
-    `Min ${fmt2(s.min)} · Max ${fmt2(s.max)} mm`,
+    axis,
+    t('Median {a} mm · Mittelwert {b} mm', { a: fmt2(s.median), b: fmt2(s.mean) }),
+    t('Quartile {a} – {b} mm', { a: fmt2(s.q1), b: fmt2(s.q3) }),
+    t('Min {a} · Max {b} mm', { a: fmt2(s.min), b: fmt2(s.max) }),
   ]
 
-  let showTable = $state(false)
   let svg: SVGSVGElement | undefined = $state()
 
   function download() {
@@ -157,99 +269,58 @@
 </script>
 
 {#if !enough}
-  <p class="muted">Für die Verteilung werden mindestens 3 Schüsse benötigt.</p>
+  <p class="muted">{t('Für die Verteilung werden mindestens 3 Schüsse benötigt.')}</p>
 {:else if xs && ys}
   <div class="toolbar">
-    <ul class="legend" aria-label="Legende">
+    <ul class="legend" aria-label={t('Legende')}>
       <li>
-        <span class="gradient" style="background: linear-gradient(90deg, {ramp[0]}, {ramp[ramp.length - 1]})"></span>
-        Schussdichte niedrig → hoch
+        <span class="gradient" style="background: linear-gradient(90deg, {legendRamp})"></span>
+        {t('Schussdichte niedrig → hoch')}
       </li>
-      <li><span class="dot" style="background: {colors.ink}"></span> Schuss</li>
-      <li><span class="line" style="border-color: {colors.ink}"></span> Median</li>
-      <li><span class="line dashed" style="border-color: {colors.ink}"></span> Mittelwert</li>
+      <li><span class="line dotted" style="border-color: {theme.muted}"></span> {t('Ringe')}</li>
+      <li><span class="line" style="border-color: {theme.text}"></span> {t('Median')}</li>
+      <li><span class="line dashed" style="border-color: {theme.danger}"></span> {t('Mittelwert')}</li>
     </ul>
     <span class="spacer"></span>
-    <button onclick={() => (showTable = !showTable)}>{showTable ? 'Diagramm' : 'Tabelle'}</button>
-    <button onclick={download} disabled={showTable}>SVG speichern</button>
+    <button onclick={download}>{t('SVG speichern')}</button>
   </div>
 
-  {#if showTable}
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Achse</th>
-            <th class="num">Min</th>
-            <th class="num">Q1</th>
-            <th class="num">Median</th>
-            <th class="num">Mittelwert</th>
-            <th class="num">Q3</th>
-            <th class="num">Max</th>
-          </tr>
-        </thead>
-        <tbody>
-          {#each [['x (rechts/links)', xs], ['y (hoch/tief)', ys]] as const as [label, s]}
-            <tr>
-              <td>{label}</td>
-              {#each [s.min, s.q1, s.median, s.mean, s.q3, s.max] as v}<td class="num">{fmt2(v)}</td>{/each}
-            </tr>
-          {/each}
-        </tbody>
-      </table>
-      <p class="muted small">Alle Werte in mm, {shots.length} Schüsse.</p>
-    </div>
-  {:else}
+  <div class="split">
     <div class="chart" bind:this={wrap}>
       <svg
         bind:this={svg}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 {W} {H}"
         role="img"
-        aria-label="Schussverteilung mit {shots.length} Schüssen"
+        aria-label={t('Schussverteilung mit {n} Schüssen', { n: shots.length })}
         font-family="system-ui, sans-serif"
       >
-        <rect width={W} height={H} fill={colors.surface} />
+        <rect width={W} height={H} fill={theme.surface} />
 
         <g transform="translate({left},{top})">
-          <!-- grid and target rings for orientation -->
-          {#each ticks as t}
-            <line x1={sx(t)} x2={sx(t)} y1="0" y2={S} stroke={colors.grid} stroke-width="1" />
-            <line y1={sy(t)} y2={sy(t)} x1="0" x2={S} stroke={colors.grid} stroke-width="1" />
-          {/each}
           <clipPath id="plot-clip"><rect width={S} height={S} /></clipPath>
           <g clip-path="url(#plot-clip)">
-            {#each contours as c, i}
-              <path d={path(c)} fill={levelColor(i, contours.length)} />
-            {/each}
+            <g transform={gridTransform}>
+              {#each layers as layer}
+                <path d={layer.d} fill={layer.color} />
+              {/each}
+            </g>
             {#each rings as r}
-              <circle cx={sx(0)} cy={sy(0)} r={r * unit} fill="none" stroke={colors.muted} stroke-opacity="0.45" stroke-dasharray="3 4" />
-            {/each}
-            {#each shots as s, i}
-              <circle cx={sx(s.x)} cy={sy(s.y)} r="4" fill={colors.ink} stroke={colors.surface} stroke-width="2" />
-              <circle
-                class="hit"
-                cx={sx(s.x)}
-                cy={sy(s.y)}
-                r="10"
-                fill="transparent"
-                role="img"
-                aria-label="Schuss {i + 1}"
-                onmouseenter={(e) => show(e, [`Schuss ${i + 1}: ${s.ringe.toFixed(1)}`, `x ${fmt2(s.x)} mm · y ${fmt2(s.y)} mm`, `Teiler ${s.teiler.toFixed(1)}`])}
-                onmouseleave={() => (tip = null)}
-              />
+              <circle cx={sx(0)} cy={sy(0)} r={r * unit} fill="none" stroke={theme.muted} stroke-opacity="0.6" stroke-dasharray="3 4" />
             {/each}
           </g>
-          <rect width={S} height={S} fill="none" stroke={colors.grid} />
+          <rect width={S} height={S} fill="none" stroke={theme.border} />
 
           <!-- axes -->
-          {#each ticks as t}
-            <text x={sx(t)} y={S + 16} text-anchor="middle" font-size="11" fill={colors.muted}>{t}</text>
-            <text x="-8" y={sy(t)} text-anchor="end" dominant-baseline="central" font-size="11" fill={colors.muted}>{t}</text>
+          {#each ticks as tick}
+            <line x1={sx(tick)} x2={sx(tick)} y1={S} y2={S + 5} stroke={theme.border} />
+            <line x1="-5" x2="0" y1={sy(tick)} y2={sy(tick)} stroke={theme.border} />
+            <text x={sx(tick)} y={S + 18} text-anchor="middle" font-size="11" fill={theme.muted}>{tick}</text>
+            <text x="-8" y={sy(tick)} text-anchor="end" dominant-baseline="central" font-size="11" fill={theme.muted}>{tick}</text>
           {/each}
-          <text x={S / 2} y={S + 34} text-anchor="middle" font-size="12" fill={colors.muted}>x in mm (rechts / links)</text>
-          <text transform="translate({-36},{S / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill={colors.muted}
-            >y in mm (hoch / tief)</text
+          <text x={S / 2} y={S + 36} text-anchor="middle" font-size="12" fill={theme.muted}>{t('x in mm (rechts / links)')}</text>
+          <text transform="translate({-36},{S / 2}) rotate(-90)" text-anchor="middle" font-size="12" fill={theme.muted}
+            >{t('y in mm (hoch / tief)')}</text
           >
         </g>
 
@@ -273,10 +344,10 @@
               fill="transparent"
             />
             <!-- whiskers -->
-            <line x1={a(s.whiskerLo, mid).x} y1={a(s.whiskerLo, mid).y} x2={a(s.q1, mid).x} y2={a(s.q1, mid).y} stroke={colors.muted} stroke-width="1.5" />
-            <line x1={a(s.q3, mid).x} y1={a(s.q3, mid).y} x2={a(s.whiskerHi, mid).x} y2={a(s.whiskerHi, mid).y} stroke={colors.muted} stroke-width="1.5" />
+            <line x1={a(s.whiskerLo, mid).x} y1={a(s.whiskerLo, mid).y} x2={a(s.q1, mid).x} y2={a(s.q1, mid).y} stroke={theme.muted} stroke-width="1.5" />
+            <line x1={a(s.q3, mid).x} y1={a(s.q3, mid).y} x2={a(s.whiskerHi, mid).x} y2={a(s.whiskerHi, mid).y} stroke={theme.muted} stroke-width="1.5" />
             {#each [s.whiskerLo, s.whiskerHi] as v}
-              <line x1={a(v, mid - 7).x} y1={a(v, mid - 7).y} x2={a(v, mid + 7).x} y2={a(v, mid + 7).y} stroke={colors.muted} stroke-width="1.5" />
+              <line x1={a(v, mid - 7).x} y1={a(v, mid - 7).y} x2={a(v, mid + 7).x} y2={a(v, mid + 7).y} stroke={theme.muted} stroke-width="1.5" />
             {/each}
             <!-- box -->
             <rect
@@ -284,20 +355,21 @@
               y={horizontal ? 6 : pos(s.q3)}
               width={horizontal ? Math.max(pos(s.q3) - pos(s.q1), 1) : band - 12}
               height={horizontal ? band - 12 : Math.max(pos(s.q1) - pos(s.q3), 1)}
-              rx="4"
-              fill={ramp[3]}
-              stroke={colors.surface}
-              stroke-width="2"
+              rx="3"
+              fill={boxFill}
+              stroke={theme.muted}
+              stroke-width="1.5"
             />
-            <line x1={a(s.median, 6).x} y1={a(s.median, 6).y} x2={a(s.median, band - 6).x} y2={a(s.median, band - 6).y} stroke={colors.ink} stroke-width="2" />
-            <line x1={a(s.mean, 2).x} y1={a(s.mean, 2).y} x2={a(s.mean, band - 2).x} y2={a(s.mean, band - 2).y} stroke={colors.ink} stroke-width="2" stroke-dasharray="4 3" />
+            <line x1={a(s.median, 6).x} y1={a(s.median, 6).y} x2={a(s.median, band - 6).x} y2={a(s.median, band - 6).y} stroke={theme.text} stroke-width="2" />
+            <line x1={a(s.mean, 3).x} y1={a(s.mean, 3).y} x2={a(s.mean, band - 3).x} y2={a(s.mean, band - 3).y} stroke={theme.danger} stroke-width="2" stroke-dasharray="4 3" />
             {#each s.outliers as v}
-              <circle cx={a(v, mid).x} cy={a(v, mid).y} r="3.5" fill="none" stroke={colors.muted} stroke-width="1.5" />
+              {@const p = a(v, mid)}
+              <path d="M{p.x},{p.y - 4}L{p.x + 3},{p.y}L{p.x},{p.y + 4}L{p.x - 3},{p.y}Z" fill={theme.muted} />
             {/each}
           </g>
         {/snippet}
-        <g transform="translate({left},{top - band - 14})">{@render boxplot(xs, true, 'x (rechts / links)')}</g>
-        <g transform="translate({left + S + 14},{top})">{@render boxplot(ys, false, 'y (hoch / tief)')}</g>
+        <g transform="translate({left},{top - band - 14})">{@render boxplot(xs, true, t('x (rechts / links)'))}</g>
+        <g transform="translate({left + S + 14},{top})">{@render boxplot(ys, false, t('y (hoch / tief)'))}</g>
       </svg>
       {#if tip}
         <div class="tooltip" style="left: {tip.x}px; top: {tip.y}px">
@@ -305,7 +377,29 @@
         </div>
       {/if}
     </div>
-  {/if}
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th class="num">{t('x (R/L)')}</th>
+            <th class="num">{t('y (H/T)')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each [['Min', 'min'], ['Q1', 'q1'], ['Median', 'median'], ['Mittelwert', 'mean'], ['Q3', 'q3'], ['Max', 'max']] as const as [label, key]}
+            <tr>
+              <td>{t(label)}</td>
+              <td class="num">{fmt2(xs[key])}</td>
+              <td class="num">{fmt2(ys[key])}</td>
+            </tr>
+          {/each}
+        </tbody>
+      </table>
+      <p class="muted small">{t('Alle Werte in mm, {n} Schüsse.', { n: shots.length })}</p>
+    </div>
+  </div>
 {/if}
 
 <style>
@@ -336,11 +430,6 @@
     height: 0.6rem;
     border-radius: 2px;
   }
-  .dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-  }
   .line {
     width: 1.2rem;
     border-top: 2px solid;
@@ -348,16 +437,32 @@
   .line.dashed {
     border-top-style: dashed;
   }
+  .line.dotted {
+    border-top: 1px dashed;
+  }
+  .split {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
   .chart {
     position: relative;
+    flex: 1 1 22rem;
     max-width: 40rem;
+  }
+  .table-wrap {
+    flex: 0 1 auto;
+  }
+  .table-wrap th {
+    white-space: nowrap;
   }
   svg {
     width: 100%;
     height: auto;
     display: block;
+    border-radius: var(--radius);
   }
-  .hit,
   .box {
     cursor: default;
   }

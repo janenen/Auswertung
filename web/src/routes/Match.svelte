@@ -4,6 +4,7 @@
   import { href } from '../lib/router.svelte'
   import Target from '../lib/Target.svelte'
   import Distribution from '../lib/Distribution.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { id, query = {} }: { id: string; query?: Record<string, string> } = $props()
 
@@ -12,6 +13,7 @@
   let error = $state('')
   let series = $state(-1) // -1: whole match
   let selected = $state(-1)
+  let qrFailed = $state(false)
 
   $effect(() => {
     api
@@ -36,6 +38,22 @@
     view ? Array.from({ length: view.series.length }, (_, k) => view!.match.shots.slice(k * 10, k * 10 + 10)) : [],
   )
   const shot = $derived(selected >= 0 ? shots[selected] : undefined)
+  // Shots are numbered across the match; the target shows one series or all.
+  const offset = $derived(series < 0 ? 0 : series * 10)
+  const visible = (k: number) => series < 0 || k === series
+  // Hovered ring count, series total or offset, highlighted on the target.
+  let hover = $state<{ ring: number } | { series: number } | 'offset' | null>(null)
+  const ring = (s: { ringe: number }) => Math.floor(s.ringe)
+  const hoveredRing = $derived(hover !== null && hover !== 'offset' && 'ring' in hover ? hover.ring : -1)
+  const highlight = $derived.by(() => {
+    if (hover === null || hover === 'offset') return null
+    const all = shots.map((_, i) => i)
+    if ('ring' in hover) return all.filter((i) => ring(shots[i]) === hoveredRing)
+    const k = hover.series
+    return series < 0 ? all.slice(k * 10, k * 10 + 10) : k === series ? all : []
+  })
+  // CSV export is hidden for now; the endpoint stays available.
+  const csvExport = false
   const reportQuery = $derived<Record<string, string>>(
     query.competition ? { competition: query.competition } : { title, decimal: String(decimal) },
   )
@@ -50,110 +68,233 @@
 </script>
 
 {#if error}
-  <p class="error">{error}</p>
+  <p class="error">{tx(error)}</p>
 {:else if view && stats}
   <div class="actions head">
     <div>
       <h1>{view.shooter}</h1>
       <p class="muted sub">
-        {title} · {view.match.date} · Scheibe {view.match.type_of_target}
+        {tx(title)} · {view.match.date} · {t('Scheibe {type}', { type: view.match.type_of_target })}
         {#if view.club}· {view.club}{/if}
         {#if view.team}· {view.team}{/if}
-        {#if view.match.active}<span class="badge active">unvollständig</span>{/if}
+        {#if view.match.active}<span class="badge active">{t('unvollständig')}</span>{/if}
       </p>
     </div>
     <span class="spacer"></span>
+    <a
+      class="button primary"
+      href="/api/matches/{id}/report.pdf?{qs(reportQuery)}"
+      target="_blank"
+      title={t('Wird zusätzlich im Ausgabeordner gespeichert')}>{t('PDF erzeugen')}</a
+    >
+    {#if csvExport}
+      <a class="button" href="/api/matches/{id}/export.csv">{t('CSV erzeugen')}</a>
+    {/if}
     {#if query.competition}
-      <a class="button" href={href(`/competitions/${query.competition}`)}>Zum Wettkampf</a>
+      <a class="button" href={href(`/competitions/${query.competition}`)}>{t('Zum Wettkampf')}</a>
       {#if competition?.active}
-        <a class="button" href={href(`/competitions/${query.competition}/entry`)}>+ Nächster Beitrag</a>
+        <a class="button" href={href(`/competitions/${query.competition}/entry`)}>{t('+ Nächster Beitrag')}</a>
       {/if}
     {:else}
-      <a class="button" href={href('/')}>Zur Übersicht</a>
+      <a class="button" href={href('/')}>{t('Zur Übersicht')}</a>
     {/if}
   </div>
 
   <div class="layout">
     <section class="card target-card">
       <div class="series-nav">
-        <button onclick={() => step(-1)} aria-label="Vorherige Serie">‹</button>
-        <strong>{series < 0 ? 'Gesamt' : `Serie ${series + 1}`}</strong>
-        <button onclick={() => step(1)} aria-label="Nächste Serie">›</button>
+        <button onclick={() => step(-1)} aria-label={t('Vorherige Serie')}>‹</button>
+        <strong>{series < 0 ? t('Gesamt') : t('Serie {n}', { n: series + 1 })}</strong>
+        <button onclick={() => step(1)} aria-label={t('Nächste Serie')}>›</button>
       </div>
-      <Target type={view.match.type_of_target} {shots} zoom numbered {selected} onselect={(i) => (selected = i)} />
+      <Target
+        type={view.match.type_of_target}
+        {shots}
+        zoom
+        numbered
+        {selected}
+        onselect={(i) => (selected = i)}
+        {highlight}
+        offset={{ x: stats.ablageRL, y: stats.ablageHT }}
+        offsetActive={hover === 'offset'}
+        onoffsethover={(on) => (hover = on ? 'offset' : null)}
+      />
       <p class="shot-detail">
         {#if shot}
-          Schuss {(series < 0 ? 0 : series * 10) + selected + 1}: <strong>{ringValue(shot.ringe, decimal)}</strong>
-          <span class="muted">({fmt1(shot.ringe)})</span> · Teiler {fmt1(shot.teiler)} · x {fmt2(shot.x)} · y {fmt2(shot.y)}
+          {t('Schuss {n}:', { n: offset + selected + 1 })} <strong>{ringValue(shot.ringe, decimal)}</strong>
+          <span class="muted">({fmt1(shot.ringe)})</span> · {t('Teiler')} {fmt1(shot.teiler)} · x {fmt2(shot.x)} · y {fmt2(shot.y)}
         {:else}
-          <span class="muted">Schuss anklicken für Details</span>
+          <span class="muted">{t('Schuss anklicken für Details')}</span>
         {/if}
       </p>
     </section>
 
     <div class="side">
       <section class="card stats">
-        <h2>{series < 0 ? 'Gesamtergebnis' : `Serie ${series + 1}`}</h2>
+        <h2>{series < 0 ? t('Gesamtergebnis') : t('Serie {n}', { n: series + 1 })}</h2>
         <dl>
-          <dt>Ergebnis</dt>
+          <dt>{t('Ergebnis')}</dt>
           <dd class="result">{result(stats, decimal)}&nbsp;<small class="muted">({result(stats, !decimal)})</small></dd>
-          <dt>Schnitt</dt>
+          <dt>{t('Schnitt')}</dt>
           <dd>{fmt2((decimal ? stats.summe : stats.summeGanz) / stats.count)}</dd>
-          <dt>Bester Teiler</dt>
+          <dt>{t('Bester Teiler')}</dt>
           <dd>{fmt1(stats.best.teiler)}</dd>
-          <dt>Ablage R/L</dt>
-          <dd>{fmt1(stats.ablageRL)}</dd>
-          <dt>Ablage H/T</dt>
-          <dd>{fmt1(stats.ablageHT)}</dd>
+          {#each [{ label: t('Ablage R/L'), value: stats.ablageRL }, { label: t('Ablage H/T'), value: stats.ablageHT }] as row}
+            <div
+              class="row"
+              class:hl-row={hover === 'offset'}
+              role="presentation"
+              onmouseenter={() => (hover = 'offset')}
+              onmouseleave={() => (hover = null)}
+            >
+              <dt>{row.label}</dt>
+              <dd>{fmt1(row.value)}</dd>
+            </div>
+          {/each}
         </dl>
         <div class="rings">
           {#each stats.rings.slice(0, 6) as n, i}
-            <span><small class="muted">{10 - i}er</small><strong>{n}</strong></span>
+            <span
+              class="ring-count"
+              class:hl-row={hoveredRing === 10 - i}
+              role="presentation"
+              onmouseenter={() => (hover = { ring: 10 - i })}
+              onmouseleave={() => (hover = null)}><small class="muted">{t('{n}er', { n: 10 - i })}</small><strong>{n}</strong></span
+            >
           {/each}
         </div>
       </section>
 
       <section class="card">
-        <h2>Schüsse</h2>
+        <h2>{t('Schüsse')}</h2>
         <div class="columns">
           {#each columns as col, k}
             <button class="column" class:current={k === series} onclick={() => ((series = k), (selected = -1))}>
               {#each col as s, j}
-                <span class:hl={k === series && j === selected}>{ringValue(s.ringe, decimal)}</span>
+                <span
+                  role="presentation"
+                  class:hl={(selected >= 0 && k * 10 + j === offset + selected) || ring(s) === hoveredRing}
+                  onmouseenter={() => visible(k) && (selected = k * 10 + j - offset)}
+                  >{ringValue(s.ringe, decimal)}</span
+                >
               {/each}
-              <strong class="sum">{result(view.series[k], decimal)}</strong>
+              <strong
+                class="sum"
+                role="presentation"
+                onmouseenter={() => (hover = { series: k })}
+                onmouseleave={() => (hover = null)}>{result(view.series[k], decimal)}</strong
+              >
             </button>
           {/each}
         </div>
       </section>
-
-      <section class="card">
-        <h2>Export</h2>
-        <div class="actions">
-          <a class="button primary" href="/api/matches/{id}/report.pdf?{qs(reportQuery)}" target="_blank">PDF erzeugen</a>
-          <a class="button" href="/api/matches/{id}/export.csv">CSV erzeugen</a>
-          <a class="button" href="/api/matches/{id}/qr.png" target="_blank">QR-Code erzeugen</a>
-        </div>
-        <p class="muted small">Dateien werden zusätzlich im Ausgabeordner gespeichert.</p>
-      </section>
     </div>
   </div>
 
-  <section class="card distribution">
-    <h2>Schussverteilung {series < 0 ? 'gesamt' : `Serie ${series + 1}`}</h2>
+  <section class="card below">
+    <h2>{series < 0 ? t('Schussverteilung gesamt') : t('Schussverteilung Serie {n}', { n: series + 1 })}</h2>
     <Distribution
       {shots}
       type={view.match.type_of_target}
       filename="{view.shooter.replaceAll(' ', '_')}_{view.match.date}_verteilung.svg"
     />
   </section>
+
+  <section class="card below qr">
+    <h2>{t('QR-Code')}</h2>
+    {#if qrFailed}
+      <p class="muted">{t('Für dieses Ergebnis kann kein QR-Code erzeugt werden.')}</p>
+    {:else}
+      <!-- The enlarged copy opens beside the thumbnail, never under the pointer. -->
+      <div class="qr-box">
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+        <img
+          class="qr-thumb"
+          tabindex="0"
+          src="/api/matches/{id}/qr.png"
+          alt={t('QR-Code mit allen Schüssen')}
+          onerror={() => (qrFailed = true)}
+        />
+        <img class="qr-zoom" src="/api/matches/{id}/qr.png" alt="" aria-hidden="true" />
+      </div>
+      <p class="muted small">
+        {t('Enthält alle Schüsse und kann unter „{machine}“ wieder eingelesen werden.', { machine: t('QR-Code aus Eingabe') })}
+      </p>
+    {/if}
+  </section>
 {:else}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {/if}
 
 <style>
-  .distribution {
+  .below {
     margin-top: 1rem;
+  }
+  .qr-box {
+    position: relative;
+    width: 12rem;
+    max-width: 100%;
+  }
+  .qr-box img {
+    display: block;
+    image-rendering: pixelated;
+  }
+  .qr-thumb {
+    width: 100%;
+    cursor: zoom-in;
+  }
+  .qr-zoom {
+    position: absolute;
+    left: calc(100% + 1rem);
+    bottom: 0;
+    width: 26rem;
+    max-width: calc(100vw - 18rem);
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+    opacity: 0;
+    transform: scale(0.96);
+    transform-origin: left bottom;
+    transition:
+      opacity 0.12s,
+      transform 0.12s;
+    pointer-events: none;
+    z-index: 10;
+  }
+  .qr-thumb:hover + .qr-zoom,
+  .qr-thumb:focus-visible + .qr-zoom {
+    opacity: 1;
+    transform: none;
+  }
+  @media (max-width: 760px) {
+    /* No room beside the thumbnail: open above it. */
+    .qr-zoom {
+      left: 0;
+      bottom: calc(100% + 0.75rem);
+      width: calc(100vw - 2rem);
+      max-width: 26rem;
+    }
+  }
+  .row {
+    display: contents;
+  }
+  .row dt,
+  .row dd,
+  .ring-count,
+  .column .sum {
+    cursor: default;
+  }
+  .hl-row dt,
+  .hl-row dd,
+  .ring-count.hl-row,
+  .ring-count.hl-row small {
+    color: var(--accent);
+  }
+  .ring-count:hover,
+  .column .sum:hover {
+    color: var(--accent);
   }
   .head {
     align-items: flex-start;

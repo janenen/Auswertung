@@ -3,6 +3,7 @@
   // coordinates in mm (y up).
   import type { Shot } from './api'
   import { meta } from './meta.svelte'
+  import { t } from './i18n.svelte'
 
   let {
     type,
@@ -11,6 +12,10 @@
     numbered = false,
     selected = -1,
     onselect,
+    highlight = null,
+    offset,
+    offsetActive = false,
+    onoffsethover,
   }: {
     type: string
     shots?: Shot[]
@@ -19,6 +24,12 @@
     numbered?: boolean
     selected?: number
     onselect?: (index: number) => void
+    /** Indexes of highlighted shots; the others are dimmed. */
+    highlight?: number[] | null
+    /** Mean offset of the shots in mm, marked like in the PDF. */
+    offset?: { x: number; y: number }
+    offsetActive?: boolean
+    onoffsethover?: (hovered: boolean) => void
   } = $props()
 
   const g = $derived(meta.targets[type])
@@ -53,7 +64,7 @@
     viewBox="{-half} {-half} {2 * half} {2 * half}"
     class="target"
     role="img"
-    aria-label="Scheibe {type} mit {shots.length} Schüssen"
+    aria-label={t('Scheibe {type} mit {n} Schüssen', { type, n: shots.length })}
   >
     <rect x={-half} y={-half} width={2 * half} height={2 * half} fill="#fff" />
     <circle r={g.radiusBlack} fill="#111" />
@@ -80,6 +91,8 @@
       <g
         class="shot"
         class:selected={i === selected}
+        class:highlighted={highlight?.includes(i)}
+        class:dim={highlight && !highlight.includes(i)}
         role={onselect ? 'button' : undefined}
         tabindex={onselect ? 0 : undefined}
         onclick={() => onselect?.(i)}
@@ -106,6 +119,28 @@
         {/if}
       </g>
     {/each}
+    {#if offset && shots.length}
+      <g
+        class="offset"
+        class:active={offsetActive}
+        role="img"
+        aria-label={t('Mittlere Ablage')}
+        onmouseenter={() => onoffsethover?.(true)}
+        onmouseleave={() => onoffsethover?.(false)}
+      >
+        <title>{t('Mittlere Ablage')}</title>
+        <circle cx={offset.x * 100} cy={-offset.y * 100} r={g.radiusCalibre * 0.8} fill="transparent" />
+        <circle
+          class="mark"
+          cx={offset.x * 100}
+          cy={-offset.y * 100}
+          r={g.radiusCalibre / (offsetActive ? 2 : 3)}
+          fill="#0000ff"
+          stroke={offsetActive ? 'var(--accent)' : '#000'}
+          stroke-width={g.radiusCalibre / (offsetActive ? 5 : 12)}
+        />
+      </g>
+    {/if}
   </svg>
 {/if}
 
@@ -129,8 +164,18 @@
   .shot[role='button'] {
     cursor: pointer;
   }
-  .shot.selected circle {
+  .shot.selected circle,
+  .shot.highlighted circle {
     stroke: var(--accent);
     stroke-width: 30;
+  }
+  .shot.dim {
+    opacity: 0.3;
+  }
+  .shot,
+  .mark {
+    transition:
+      opacity 0.12s,
+      r 0.12s;
   }
 </style>

@@ -127,9 +127,9 @@ func (s *Server) matchQR(w http.ResponseWriter, r *http.Request) {
 		fail(w, errBadRequest("QR-Code kann nicht erzeugt werden: "+err.Error()))
 		return
 	}
-	shooter, _, _ := s.names(m)
-	s.deliver(w, data, "image/png", []string{report.SafeName(shooter), "qr"},
-		report.FileDate(m.Date)+"_"+m.TypeOfTarget, ".png", false)
+	// Shown on the result page only, so no copy is saved.
+	w.Header().Set("Content-Type", "image/png")
+	w.Write(data)
 }
 
 // --- machines and readings ---

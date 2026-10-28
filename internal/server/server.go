@@ -58,6 +58,7 @@ func (s *Server) routes(frontend fs.FS) http.Handler {
 	mux.HandleFunc("GET /api/board", s.board)
 
 	mux.HandleFunc("GET /api/matches/{id}", s.getMatch)
+	mux.HandleFunc("DELETE /api/matches/{id}", s.deleteMatch)
 	mux.HandleFunc("GET /api/matches/{id}/export.csv", s.matchCSV)
 	mux.HandleFunc("GET /api/matches/{id}/qr.png", s.matchQR)
 

@@ -131,6 +131,9 @@ export interface MatchView {
     competition: string
     title: string
     decimal: boolean
+    /** Settings of a quick analysis (count 0 if not stored), 0 for a competition entry. */
+    count: number
+    shots_per_target: number
   }
   shooter: string
   club: string
@@ -181,7 +184,7 @@ export interface ShooterMatch extends Entry {
   title: string
   typeOfTarget: string
   decimal: boolean
-  /** Shots of the competition, 0 for a quick analysis. */
+  /** Shots of the competition or quick analysis, 0 if unknown. */
   count: number
 }
 
@@ -256,6 +259,7 @@ export const api = {
   simulateLeague: (id: string) => request<{ matchIds: string[] }>('POST', `/competitions/${id}/simulate`),
 
   match: (id: string) => get<MatchView>(`/matches/${id}`),
+  deleteMatch: (id: string) => request<void>('DELETE', `/matches/${id}`),
   board: () => get<BoardCompetition[]>('/board'),
 
   machines: () => get<Machine[]>('/machines'),

@@ -1,14 +1,18 @@
 <script lang="ts">
-  import { api, type CompetitionView } from '../lib/api'
+  import { api, type CompetitionView, type Entry } from '../lib/api'
   import { href, navigate } from '../lib/router.svelte'
   import { t, tx } from '../lib/i18n.svelte'
   import { meta } from '../lib/meta.svelte'
+  import Confirm from '../lib/Confirm.svelte'
 
   let { id }: { id: string } = $props()
 
   let view = $state<CompetitionView | null>(null)
   let error = $state('')
   let simulating = $state(false)
+  // Entry to remove after confirmation, e.g. one recorded for the wrong shooter.
+  let removing = $state<Entry | null>(null)
+  let confirmRemove = $state(false)
 
   function load() {
     api
@@ -27,6 +31,15 @@
       error = (e as Error).message
     } finally {
       simulating = false
+    }
+  }
+
+  async function remove(e: Entry) {
+    try {
+      await api.deleteMatch(e.matchId)
+      load()
+    } catch (err) {
+      error = (err as Error).message
     }
   }
 
@@ -93,6 +106,7 @@
               <th class="num">{t('Schüsse')}</th>
               <th>{t('Serien')}</th>
               <th class="num">{t('Wertung')}</th>
+              {#if c.active}<th></th>{/if}
             </tr>
           </thead>
           <tbody>
@@ -104,6 +118,20 @@
                 <td class="num">{e.shots}/{c.count}</td>
                 <td class="muted">{e.series.join(' · ')}</td>
                 <td class="num"><strong>{e.value}</strong></td>
+                {#if c.active}
+                  <td class="num">
+                    <button
+                      class="remove"
+                      title={t('Beitrag entfernen')}
+                      aria-label={t('Beitrag entfernen')}
+                      onclick={(ev) => {
+                        ev.stopPropagation()
+                        removing = e
+                        confirmRemove = true
+                      }}>✕</button
+                    >
+                  </td>
+                {/if}
               </tr>
             {/each}
           </tbody>
@@ -111,6 +139,17 @@
       </div>
     {/if}
   </section>
+
+  <Confirm
+    bind:open={confirmRemove}
+    title={t('Beitrag aus dem Wettkampf entfernen?')}
+    message={removing
+      ? t('{shooter}, {n} Schuss. Das Ergebnis wird endgültig gelöscht.', { shooter: removing.shooter, n: removing.shots })
+      : ''}
+    confirmLabel={t('Entfernen')}
+    danger
+    onconfirm={() => removing && remove(removing)}
+  />
 {:else}
   <p class="muted">{t('Lade…')}</p>
 {/if}
@@ -138,7 +177,8 @@
     gap: 0.4rem;
     align-items: center;
   }
-  .incomplete button {
+  .incomplete button,
+  .remove {
     padding: 0.15rem 0.6rem;
   }
 </style>

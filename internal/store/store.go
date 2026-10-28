@@ -403,7 +403,7 @@ func (s *Store) DeleteCompetition(id string) error {
 // --- matches ---
 
 const matchColumns = `id, shooter_id, COALESCE(club_id, ''), COALESCE(team_id, ''), COALESCE(competition_id, ''),
-	target_type, date, active, title, decimal FROM matches`
+	target_type, date, active, title, decimal, shot_count, shots_per_target FROM matches`
 
 // matches loads the matches selected by where (with args) in recording
 // order, including their shots.
@@ -418,7 +418,7 @@ func (s *Store) matches(where string, args ...any) ([]model.Match, error) {
 	for rows.Next() {
 		m := model.Match{Shots: model.Shots{}}
 		if err := rows.Scan(&m.ID, &m.Shooter, &m.Club, &m.Team, &m.Competition, &m.TypeOfTarget, &m.Date, &m.Active,
-			&m.Title, &m.Decimal); err != nil {
+			&m.Title, &m.Decimal, &m.Count, &m.ShotsPerTarget); err != nil {
 			return nil, err
 		}
 		m.Date = displayDate(m.Date)
@@ -470,11 +470,12 @@ func (s *Store) UserMatches(user string) ([]model.Match, error) {
 // NewMatch describes the result of a reading that starts a new match.
 type NewMatch struct {
 	Shooter, Club, Team, TypeOfTarget string
-	// Competition is empty for a quick analysis, which has a Title and
-	// Decimal scoring instead.
-	Competition string
-	Title       string
-	Decimal     bool
+	// Competition is empty for a quick analysis, which has a Title,
+	// Decimal scoring and ShotsPerTarget instead.
+	Competition    string
+	Title          string
+	Decimal        bool
+	ShotsPerTarget int
 	// Count is the number of shots after which the match is complete.
 	Count int
 	Shots model.Shots
@@ -488,12 +489,16 @@ func (s *Store) RecordNewMatch(n NewMatch) (model.Match, error) {
 		TypeOfTarget: n.TypeOfTarget, Date: now.Format(displayLayout), Active: len(n.Shots) < n.Count,
 		Title: n.Title, Decimal: n.Decimal, Shots: append(model.Shots{}, n.Shots...),
 	}
+	if n.Competition == "" {
+		m.Count, m.ShotsPerTarget = n.Count, n.ShotsPerTarget
+	}
 	err := s.tx(func(tx *sql.Tx) error {
 		if _, err := tx.Exec(`INSERT INTO matches
-			(id, shooter_id, competition_id, club_id, team_id, target_type, date, active, title, decimal)
-			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+			(id, shooter_id, competition_id, club_id, team_id, target_type, date, active, title, decimal,
+			shot_count, shots_per_target)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 			m.ID, m.Shooter, null(m.Competition), null(m.Club), null(m.Team), m.TypeOfTarget, now.Format(isoLayout), m.Active,
-			m.Title, m.Decimal); err != nil {
+			m.Title, m.Decimal, m.Count, m.ShotsPerTarget); err != nil {
 			return referenceError(err, n)
 		}
 		return insertShots(tx, m.ID, 0, m.Shots)
@@ -547,4 +552,15 @@ func (s *Store) AppendShots(matchID string, shots model.Shots, count int) (model
 		return model.Match{}, err
 	}
 	return s.Match(matchID)
+}
+
+// DeleteMatch removes a match and its shots, e.g. to correct a competition.
+func (s *Store) DeleteMatch(id string) error {
+	return s.tx(func(tx *sql.Tx) error {
+		res, err := tx.Exec("DELETE FROM matches WHERE id = ?", id)
+		if err != nil {
+			return err
+		}
+		return requireRow(res, "match", id)
+	})
 }

@@ -168,6 +168,63 @@ func TestReadingFlow(t *testing.T) {
 	if len(inactive) != 1 || inactive[0].EntryCount != 1 {
 		t.Errorf("inactive = %+v", inactive)
 	}
+
+	// Entries can only be removed while the competition is running.
+	if code := call(t, ts, "DELETE", "/api/matches/"+matchID, nil, nil); code != http.StatusBadRequest {
+		t.Errorf("delete entry of finished competition: %d", code)
+	}
+	call(t, ts, "PATCH", "/api/competitions/"+comp.ID, map[string]bool{"active": true}, nil)
+	if code := call(t, ts, "DELETE", "/api/matches/"+matchID, nil, nil); code != http.StatusNoContent {
+		t.Errorf("delete entry: %d", code)
+	}
+	if code := call(t, ts, "GET", "/api/matches/"+matchID, nil, nil); code != http.StatusNotFound {
+		t.Errorf("deleted entry still found: %d", code)
+	}
+	if code := call(t, ts, "DELETE", "/api/competitions/"+comp.ID, nil, nil); code != http.StatusNoContent {
+		t.Errorf("delete emptied competition: %d", code)
+	}
+}
+
+func TestQuickContinue(t *testing.T) {
+	ts := newTestServer(t)
+	var user struct{ ID string }
+	call(t, ts, "POST", "/api/users", map[string]string{"name": "Anna"}, &user)
+	quick := map[string]any{"name": "Training", "count": 3, "shots_per_target": 1, "type_of_target": "LG", "decimal": true}
+
+	// 2 of 3 shots, then the rest from the stored settings.
+	var sess struct{ ID string }
+	call(t, ts, "POST", "/api/readings", map[string]any{
+		"machineId": "csv", "quick": quick, "userId": user.ID, "data": []byte(testCSV),
+	}, &sess)
+	events := readEvents(t, ts, sess.ID)
+	matchID, _ := events[len(events)-1]["matchId"].(string)
+	var mv matchView
+	call(t, ts, "GET", "/api/matches/"+matchID, nil, &mv)
+	if !mv.Match.Active || mv.Match.Count != 3 || mv.Match.ShotsPerTarget != 1 || mv.Match.Title != "Training" {
+		t.Fatalf("match = %+v", mv.Match)
+	}
+	if code := call(t, ts, "POST", "/api/readings", map[string]any{
+		"machineId": "qr", "matchId": matchID, "data": []byte("04092023LGA0100.0+0.1+0.2"),
+	}, &sess); code != 200 {
+		t.Fatalf("continue: %d", code)
+	}
+	readEvents(t, ts, sess.ID)
+	call(t, ts, "GET", "/api/matches/"+matchID, nil, &mv)
+	if len(mv.Match.Shots) != 3 || mv.Match.Active || !mv.Match.Decimal {
+		t.Fatalf("continued match = %+v", mv.Match)
+	}
+	if code := call(t, ts, "POST", "/api/readings", map[string]any{
+		"machineId": "qr", "matchId": matchID, "data": []byte("04092023LGA0100.0+0.1+0.2"),
+	}, &sess); code != http.StatusBadRequest {
+		t.Errorf("continue complete match: %d", code)
+	}
+
+	if code := call(t, ts, "DELETE", "/api/matches/"+matchID, nil, nil); code != http.StatusNoContent {
+		t.Errorf("delete: %d", code)
+	}
+	if code := call(t, ts, "DELETE", "/api/matches/"+matchID, nil, nil); code != http.StatusNotFound {
+		t.Errorf("delete again: %d", code)
+	}
 }
 
 func TestValidation(t *testing.T) {

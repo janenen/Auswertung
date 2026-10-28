@@ -98,11 +98,13 @@ type Match struct {
 	Date string `json:"date"`
 	// Active marks an incomplete match that can be continued.
 	Active bool `json:"active"`
-	// Title and Decimal (scoring in tenths) are set for quick analyses;
-	// matches of a competition use the competition's.
-	Title   string `json:"title"`
-	Decimal bool   `json:"decimal"`
-	Shots   Shots  `json:"shots"`
+	// Title, Decimal (scoring in tenths), Count and ShotsPerTarget are set
+	// for quick analyses; matches of a competition use the competition's.
+	Title          string `json:"title"`
+	Decimal        bool   `json:"decimal"`
+	Count          int    `json:"count"`
+	ShotsPerTarget int    `json:"shots_per_target"`
+	Shots          Shots  `json:"shots"`
 }
 
 type User struct {

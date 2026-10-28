@@ -125,11 +125,12 @@ func TestSchemaUpgrade(t *testing.T) {
 	if err != nil || m.Title != "" || m.Decimal || m.Date != "02.01.2025" {
 		t.Fatalf("match = %+v, %v", m, err)
 	}
-	quick, err := s.RecordNewMatch(NewMatch{Shooter: "u1", Title: "Zu Hause", Decimal: true, Count: 1})
+	quick, err := s.RecordNewMatch(NewMatch{Shooter: "u1", Title: "Zu Hause", Decimal: true, Count: 2, ShotsPerTarget: 1})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ms, _ := s.UserMatches("u1"); len(ms) != 2 || ms[1].ID != quick.ID || ms[1].Title != "Zu Hause" || !ms[1].Decimal {
+	if ms, _ := s.UserMatches("u1"); len(ms) != 2 || ms[1].ID != quick.ID || ms[1].Title != "Zu Hause" || !ms[1].Decimal ||
+		ms[1].Count != 2 || ms[1].ShotsPerTarget != 1 || ms[0].Count != 0 {
 		t.Errorf("user matches = %+v", ms)
 	}
 }
@@ -156,9 +157,22 @@ func TestCompetitions(t *testing.T) {
 	}
 
 	u, _ := s.SaveUser(model.User{Name: "Anna"})
-	s.RecordNewMatch(NewMatch{Shooter: u.ID, Competition: older.ID, Count: 1})
+	entry, _ := s.RecordNewMatch(NewMatch{Shooter: u.ID, Competition: older.ID, Count: 2, ShotsPerTarget: 1,
+		Shots: model.Shots{{Ringe: 9}}})
+	if entry.Count != 0 || entry.ShotsPerTarget != 0 {
+		t.Errorf("competition settings stored with the entry: %+v", entry)
+	}
 	if err := s.DeleteCompetition(older.ID); !errors.Is(err, ErrHasEntries) {
 		t.Errorf("delete with entries: %v", err)
+	}
+	if err := s.DeleteMatch(entry.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.DeleteMatch(entry.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("delete again: %v", err)
+	}
+	if err := s.DeleteCompetition(older.ID); err != nil {
+		t.Errorf("delete after removing the entry: %v", err)
 	}
 	if err := s.DeleteCompetition(league.ID); err != nil {
 		t.Fatal(err)

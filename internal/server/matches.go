@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -58,6 +59,46 @@ func (s *Server) getMatch(w http.ResponseWriter, r *http.Request) {
 		v.Series = append(v.Series, stats(series))
 	}
 	writeJSON(w, v)
+}
+
+// beingRead reports whether a running reading continues the match.
+func (s *Server) beingRead(matchID string) bool {
+	for _, l := range s.readings.Live() {
+		if l.Tag.MatchID == matchID {
+			return true
+		}
+	}
+	return false
+}
+
+// deleteMatch removes a quick analysis or an entry of a running
+// competition, e.g. to correct a mistake.
+func (s *Server) deleteMatch(w http.ResponseWriter, r *http.Request) {
+	m, err := s.store.Match(r.PathValue("id"))
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	if m.Competition != "" {
+		c, err := s.store.Competition(m.Competition)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		if !c.Active {
+			fail(w, errBadRequest("Wettkampf ist beendet"))
+			return
+		}
+	}
+	if s.beingRead(m.ID) {
+		writeError(w, http.StatusConflict, errors.New("Dieses Ergebnis wird gerade eingelesen"))
+		return
+	}
+	if err := s.store.DeleteMatch(m.ID); err != nil {
+		fail(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) matchCSV(w http.ResponseWriter, r *http.Request) {
@@ -156,23 +197,36 @@ func (s *Server) readingParams(req startReadingRequest) (reading.Params, error) 
 
 	switch {
 	case req.MatchID != "":
-		c, err := s.store.Competition(req.CompetitionID)
-		if err != nil {
-			return p, err
-		}
 		match, err := s.store.Match(req.MatchID)
 		if err != nil {
 			return p, err
 		}
-		rest := c.Count - len(match.Shots)
+		count, perTarget := match.Count, match.ShotsPerTarget
+		if match.Competition != "" {
+			c, err := s.store.Competition(match.Competition)
+			if err != nil {
+				return p, err
+			}
+			if !c.Active {
+				return p, errBadRequest("Wettkampf ist beendet")
+			}
+			count, perTarget = c.Count, c.ShotsPerTarget
+		}
+		if count == 0 {
+			return p, errBadRequest("Die Schusszahl dieser Schnellauswertung ist unbekannt")
+		}
+		rest := count - len(match.Shots)
 		if rest <= 0 {
 			return p, errBadRequest("Dieses Ergebnis ist bereits vollständig")
 		}
-		p.Request = machine.Request{Count: rest, ShotsPerTarget: c.ShotsPerTarget}
+		if s.beingRead(match.ID) {
+			return p, errBadRequest("Dieses Ergebnis wird gerade eingelesen")
+		}
+		p.Request = machine.Request{Count: rest, ShotsPerTarget: perTarget}
 		p.ExpectedTarget = match.TypeOfTarget
-		p.Tag = reading.Tag{CompetitionID: c.ID, MatchID: match.ID, ShooterID: match.Shooter}
+		p.Tag = reading.Tag{CompetitionID: match.Competition, MatchID: match.ID, ShooterID: match.Shooter}
 		p.Finish = func(shots model.Shots, _ string) (string, error) {
-			m, err := s.store.AppendShots(match.ID, shots, c.Count)
+			m, err := s.store.AppendShots(match.ID, shots, count)
 			return m.ID, err
 		}
 
@@ -205,7 +259,9 @@ func (s *Server) readingParams(req startReadingRequest) (reading.Params, error) 
 		}
 		p.Request = machine.Request{Count: q.Count, ShotsPerTarget: q.ShotsPerTarget}
 		p.ExpectedTarget = q.TypeOfTarget
-		p.Finish = s.recordNew(req, store.NewMatch{Title: strings.TrimSpace(q.Name), Decimal: q.Decimal, Count: q.Count})
+		p.Finish = s.recordNew(req, store.NewMatch{
+			Title: strings.TrimSpace(q.Name), Decimal: q.Decimal, Count: q.Count, ShotsPerTarget: q.ShotsPerTarget,
+		})
 
 	default:
 		return p, errBadRequest("Wettkampf oder Schnellauswertung angeben")

@@ -77,4 +77,10 @@ CREATE TABLE shots (
 ALTER TABLE matches ADD COLUMN title TEXT NOT NULL DEFAULT '';
 ALTER TABLE matches ADD COLUMN decimal INTEGER NOT NULL DEFAULT 0;
 `,
+	// 3: shot counts of quick analyses, so incomplete ones can be continued
+	// (0 for earlier quick analyses and for matches of a competition).
+	`
+ALTER TABLE matches ADD COLUMN shot_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE matches ADD COLUMN shots_per_target INTEGER NOT NULL DEFAULT 0;
+`,
 }

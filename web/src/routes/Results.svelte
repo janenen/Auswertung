@@ -17,7 +17,6 @@
   })
 
   const c = $derived(res?.competition)
-  const teamTotal = (entries: Entry[]) => entries.reduce((sum, e) => sum + e.summeGanz, 0)
 
   async function finish() {
     try {
@@ -111,23 +110,106 @@
     {/if}
   </div>
 
-  {#if res.league}
-    <div class="league">
-      <section class="card">
-        <div class="actions">
-          <h2>{t('Heim: {club} – {team}', { club: res.league.homeClubName, team: res.league.homeTeamName })}</h2>
-          <span class="spacer"></span><strong class="total">{teamTotal(res.home)}</strong>
-        </div>
-        {@render table(res.home, false)}
-      </section>
-      <section class="card">
-        <div class="actions">
-          <h2>{t('Gast: {club} – {team}', { club: res.league.guestClubName, team: res.league.guestTeamName })}</h2>
-          <span class="spacer"></span><strong class="total">{teamTotal(res.guest)}</strong>
-        </div>
-        {@render table(res.guest, false)}
-      </section>
-    </div>
+  {#if res.league && res.score}
+    <!-- Laid out like the RSB league result form. -->
+    {@const l = res.league}
+    {@const s = res.score}
+    {@const open = (e: Entry) => navigate(`/matches/${e.matchId}`, { competition: id })}
+    <section class="card sheet">
+      <div class="sheet-head">
+        <span><span class="label">{t('Disziplin')}:</span> {l.discipline}</span>
+        <span><span class="label">{t('Datum')}:</span> {c.date}</span>
+        <span><span class="label">{tx(l.league)}</span> {t('Gruppe')} {l.group}</span>
+      </div>
+
+      <div class="teams">
+        {#each [{ role: t('Gastgeber / Ausrichter'), club: l.homeClubName, team: l.homeTeamName, entries: res.home, places: s.homePlaces }, { role: t('Gast'), club: l.guestClubName, team: l.guestTeamName, entries: res.guest, places: s.guestPlaces }] as side}
+          <div class="team">
+            <div class="team-name">{side.club} – {side.team}</div>
+            <div class="team-role">{side.role}</div>
+            <table class="grid">
+              <thead>
+                <tr>
+                  <th class="num nr">{t('Lfd. Nr.')}</th>
+                  <th>{t('Name')}</th>
+                  <th class="num">{t('Ergebnis')}</th>
+                  <th class="num">{t('Platz')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {#each Array.from({ length: Math.max(5, side.entries.length) }, (_, i) => side.entries[i]) as e, i}
+                  {#if e}
+                    <tr class="clickable" onclick={() => open(e)}>
+                      <td class="num nr">{i + 1}</td>
+                      <td>{e.shooter} {#if e.active}<span class="badge active">{e.shots}/{c.count}</span>{/if}</td>
+                      <td class="num"><strong>{e.summeGanz}</strong></td>
+                      <td class="num">{side.places[i]}</td>
+                    </tr>
+                  {:else}
+                    <tr class="empty"><td class="num nr">{i + 1}</td><td></td><td></td><td></td></tr>
+                  {/if}
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        {/each}
+      </div>
+
+      <table class="grid pairings">
+        <thead>
+          <tr>
+            <th class="num">{t('Platz')}</th>
+            <th>{t('Name')}</th>
+            <th class="num">{t('Ergebnis')}</th>
+            <th class="num">{t('Punkte')}</th>
+            <th class="colon"></th>
+            <th class="num">{t('Punkte')}</th>
+            <th class="num">{t('Ergebnis')}</th>
+            <th>{t('Name')}</th>
+            <th class="num">{t('Platz')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {#each s.pairings as p}
+            {@const h = res.home[p.home]}
+            {@const g = res.guest[p.guest]}
+            {@const scored = !!h && !!g}
+            <tr>
+              <td class="num place">{p.place}</td>
+              <td class:clickable={h} onclick={() => h && open(h)}>{h?.shooter ?? ''}</td>
+              <td class="num">{h?.summeGanz ?? ''}</td>
+              <td class="num points" class:win={scored && p.homePoints === 2}>{scored ? p.homePoints : ''}</td>
+              <td class="colon">:</td>
+              <td class="num points" class:win={scored && p.guestPoints === 2}>{scored ? p.guestPoints : ''}</td>
+              <td class="num">{g?.summeGanz ?? ''}</td>
+              <td class:clickable={g} onclick={() => g && open(g)}>{g?.shooter ?? ''}</td>
+              <td class="num place">{p.place}</td>
+            </tr>
+          {/each}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="num">{t('Einzelpunkte')}</th>
+            <td class="num points total">{s.homePoints}</td>
+            <td class="colon">:</td>
+            <td class="num points total">{s.guestPoints}</td>
+            <td colspan="3"></td>
+          </tr>
+          <tr>
+            <th colspan="3" class="num">{t('Mannschaftspunkte')}</th>
+            <td class="num points total" class:win={s.complete && s.homeTeamPoints === 2}>{s.complete ? s.homeTeamPoints : '–'}</td>
+            <td class="colon">:</td>
+            <td class="num points total" class:win={s.complete && s.guestTeamPoints === 2}>{s.complete ? s.guestTeamPoints : '–'}</td>
+            <td colspan="3"></td>
+          </tr>
+        </tfoot>
+      </table>
+      {#if !s.complete}
+        <p class="muted small">
+          {t('Vorläufig: Mannschaftspunkte werden vergeben, sobald beide Mannschaften mindestens 3 vollständige Ergebnisse haben.')}
+        </p>
+      {/if}
+    </section>
   {:else}
     <section class="card">{@render table(res.ranked, true)}</section>
   {/if}
@@ -158,15 +240,99 @@
   .sub {
     margin: 0.2rem 0 0;
   }
-  .league {
+  .sheet-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 2.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .label {
+    font-weight: 600;
+  }
+  .teams {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(22rem, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(20rem, 1fr));
+    gap: 1rem 1.5rem;
+    margin-bottom: 1.25rem;
   }
-  .league h2 {
-    margin: 0;
+  .team-name {
+    font-weight: 600;
+    text-align: center;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid var(--muted);
   }
-  .total {
-    font-size: 1.4rem;
+  .team-role {
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  /* Ruled like the paper form. */
+  .grid {
+    width: 100%;
+    border-collapse: collapse;
+    font-variant-numeric: tabular-nums;
+  }
+  .grid th,
+  .grid td {
+    border: 1px solid var(--border);
+    padding: 0.3rem 0.5rem;
+    height: 2.1rem;
+  }
+  .grid thead th {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: none;
+    letter-spacing: 0;
+    background: var(--surface-2);
+  }
+  .grid .nr {
+    width: 3.2rem;
+    color: var(--muted);
+  }
+  .grid tr.empty td {
+    background: transparent;
+  }
+  .pairings {
+    max-width: 60rem;
+  }
+  .pairings .place {
+    width: 3.5rem;
+    font-size: 1.1rem;
+  }
+  .pairings .points {
+    width: 4rem;
+  }
+  .pairings .colon {
+    width: 1rem;
+    padding: 0;
+    text-align: center;
+    font-weight: 700;
+    border-left: none;
+    border-right: none;
+  }
+  .pairings tfoot th {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: none;
+    letter-spacing: 0;
+    border: none;
+  }
+  .pairings tfoot td[colspan] {
+    border: none;
+  }
+  .pairings .total {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .win {
+    color: var(--ok);
+    font-weight: 700;
+  }
+  .small {
+    font-size: 0.85rem;
+    margin: 0.75rem 0 0;
   }
 </style>

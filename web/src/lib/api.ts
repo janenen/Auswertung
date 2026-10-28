@@ -82,6 +82,29 @@ export interface Results extends CompetitionView {
   ranked: Entry[]
   home: Entry[]
   guest: Entry[]
+  /** League scoring of home against guest (RSB-LO 7.2, 7.3). */
+  score?: LeagueResult
+}
+
+export interface LeaguePairing {
+  place: number
+  /** Indexes into home/guest, -1 if the team has no shooter on this place. */
+  home: number
+  guest: number
+  homePoints: number
+  guestPoints: number
+}
+
+export interface LeagueResult {
+  homePlaces: number[]
+  guestPlaces: number[]
+  pairings: LeaguePairing[]
+  homePoints: number
+  guestPoints: number
+  /** Both teams have at least 3 final results; team points are awarded. */
+  complete: boolean
+  homeTeamPoints: number
+  guestTeamPoints: number
 }
 
 export interface Stats {

@@ -108,6 +108,15 @@ export const en = {
   'Der Wettkampf wird ins Archiv verschoben und kann dort wieder aktiviert werden.':
     'The competition is moved to the archive and can be reactivated there.',
   'Der Wettkampf hat keine Beiträge und wird gelöscht.': 'The competition has no entries and will be deleted.',
+  'Gastgeber / Ausrichter': 'Host',
+  Gast: 'Guest',
+  'Lfd. Nr.': 'No.',
+  Platz: 'Place',
+  Punkte: 'Points',
+  Einzelpunkte: 'Individual points',
+  Mannschaftspunkte: 'Team points',
+  'Vorläufig: Mannschaftspunkte werden vergeben, sobald beide Mannschaften mindestens 3 vollständige Ergebnisse haben.':
+    'Provisional: team points are awarded once both teams have at least 3 complete results.',
 
   // entry wizard
   'Ergebnis fortsetzen': 'Continue result',

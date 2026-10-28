@@ -109,6 +109,15 @@ export const ml: Record<Key, string> = {
   'Der Wettkampf wird ins Archiv verschoben und kann dort wieder aktiviert werden.':
     'മത്സരം ആർക്കൈവിലേക്ക് മാറ്റും, അവിടെ നിന്ന് വീണ്ടും സജീവമാക്കാം.',
   'Der Wettkampf hat keine Beiträge und wird gelöscht.': 'മത്സരത്തിൽ എൻട്രികളില്ലാത്തതിനാൽ അത് ഇല്ലാതാക്കും.',
+  'Gastgeber / Ausrichter': 'ആതിഥേയർ / സംഘാടകർ',
+  Gast: 'അതിഥി',
+  'Lfd. Nr.': 'ക്രമ നം.',
+  Platz: 'സ്ഥാനം',
+  Punkte: 'പോയിന്റുകൾ',
+  Einzelpunkte: 'വ്യക്തിഗത പോയിന്റുകൾ',
+  Mannschaftspunkte: 'ടീം പോയിന്റുകൾ',
+  'Vorläufig: Mannschaftspunkte werden vergeben, sobald beide Mannschaften mindestens 3 vollständige Ergebnisse haben.':
+    'താൽക്കാലികം: രണ്ട് ടീമുകൾക്കും കുറഞ്ഞത് 3 പൂർണ്ണ ഫലങ്ങൾ ആകുമ്പോൾ ടീം പോയിന്റുകൾ നൽകും.',
 
   // entry wizard
   'Ergebnis fortsetzen': 'ഫലം തുടരുക',

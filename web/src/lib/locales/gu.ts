@@ -109,6 +109,15 @@ export const gu: Record<Key, string> = {
   'Der Wettkampf wird ins Archiv verschoben und kann dort wieder aktiviert werden.':
     'સ્પર્ધા આર્કાઇવમાં ખસેડવામાં આવશે અને ત્યાંથી ફરી સક્રિય કરી શકાશે.',
   'Der Wettkampf hat keine Beiträge und wird gelöscht.': 'સ્પર્ધામાં કોઈ પ્રવેશ નથી, તેથી તે કાઢી નાખવામાં આવશે.',
+  'Gastgeber / Ausrichter': 'યજમાન / આયોજક',
+  Gast: 'મહેમાન',
+  'Lfd. Nr.': 'ક્રમ',
+  Platz: 'સ્થાન',
+  Punkte: 'પોઈન્ટ',
+  Einzelpunkte: 'વ્યક્તિગત પોઈન્ટ',
+  Mannschaftspunkte: 'ટીમ પોઈન્ટ',
+  'Vorläufig: Mannschaftspunkte werden vergeben, sobald beide Mannschaften mindestens 3 vollständige Ergebnisse haben.':
+    'કામચલાઉ: બંને ટીમો પાસે ઓછામાં ઓછાં 3 પૂર્ણ પરિણામો થાય ત્યારે ટીમ પોઈન્ટ આપવામાં આવે છે.',
 
   // entry wizard
   'Ergebnis fortsetzen': 'પરિણામ ચાલુ રાખો',

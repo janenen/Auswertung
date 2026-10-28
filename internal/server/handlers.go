@@ -352,6 +352,8 @@ type resultsView struct {
 	Ranked []entryView `json:"ranked"`
 	Home   []entryView `json:"home"`
 	Guest  []entryView `json:"guest"`
+	// Score is the league scoring of Home against Guest.
+	Score *model.LeagueResult `json:"score,omitempty"`
 }
 
 // rankedLists holds the result lists for the PDF report.
@@ -385,6 +387,17 @@ func (s *Server) results(id string) (resultsView, rankedLists, error) {
 				add(&res.Guest, &lists.guest, m)
 			}
 		}
+		final := true
+		results := func(entries []entryView) []int {
+			out := make([]int, len(entries))
+			for i, e := range entries {
+				out[i] = e.SummeGanz // full ring scoring (RSB-LO 6.3)
+				final = final && !e.Active
+			}
+			return out
+		}
+		score := model.ScoreLeague(results(res.Home), results(res.Guest), final)
+		res.Score = &score
 		return res, lists, nil
 	}
 	ptrs := make([]*model.Match, len(matches))

@@ -3,13 +3,14 @@
 Evaluation of shooting results for sport shooting clubs: reads shots from a
 RIKA SAG-2 scoring machine (serial port) or from CSV/QSD files and QR codes,
 manages competitions, shooters, clubs, teams and RSB league matches, and
-creates PDF reports.
+prints result reports.
 
 Auswertung is a local web app: a single executable starts a server on
 `http://127.0.0.1:8080` and opens the browser. Data is stored in the SQLite
 database `./db/auswertung.db` (data of the former Python version in `./db/*.json`
 is imported on first start and then moved to `./db/legacy`); nothing else is
-written to disk: reports and exports are created on demand.
+written to disk. "Drucken / PDF" opens the browser's print dialog, where any
+paper format can be chosen and the report saved as PDF.
 
 To test without hardware, start with `-simulator`: a "Rika-Simulator" is then
 offered next to the real machines and produces random shots on the

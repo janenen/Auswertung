@@ -1,5 +1,6 @@
 <script lang="ts">
-  import { api, type Competition, type MatchView } from '../lib/api'
+  import { type Competition, type MatchView } from '../lib/api'
+  import { loadMatch, matchTitle } from '../lib/match'
   import { fmt1, fmt2, result, ringValue } from '../lib/meta.svelte'
   import { href } from '../lib/router.svelte'
   import Target from '../lib/Target.svelte'
@@ -19,20 +20,14 @@
   // analysis has its title and scoring stored with the match.
   const competitionId = $derived(query.competition || view?.match.competition || '')
   $effect(() => {
-    api
-      .match(id)
-      .then(async (v) => {
-        view = v
-        const cid = query.competition || v.match.competition
-        if (cid) competition = (await api.competition(cid)).competition
-      })
+    loadMatch(id, query.competition)
+      .then((ctx) => ((view = ctx.view), (competition = ctx.competition)))
       .catch((e) => (error = e.message))
   })
 
-  const decimal = $derived(
-    competition ? competition.decimal : query.decimal ? query.decimal === 'true' : (view?.match.decimal ?? false),
-  )
-  const title = $derived(competition?.name ?? query.title ?? (view?.match.title || 'Schnellauswertung'))
+  const info = $derived(view ? matchTitle({ view, competition }, query) : { title: '', decimal: false })
+  const decimal = $derived(info.decimal)
+  const title = $derived(info.title)
   const shots = $derived(
     view ? (series < 0 ? view.match.shots : view.match.shots.slice(series * 10, series * 10 + 10)) : [],
   )
@@ -57,10 +52,13 @@
   })
   // CSV export is hidden for now; the endpoint stays available.
   const csvExport = false
-  const reportQuery = $derived<Record<string, string>>(
-    competitionId ? { competition: competitionId } : { title, decimal: String(decimal) },
+  // The print view opens the browser's print dialog (paper format, "Save as PDF").
+  const printHref = $derived(
+    href(`/matches/${id}/print`, {
+      ...(competitionId ? { competition: competitionId } : { title, decimal }),
+      print: 1,
+    }),
   )
-  const qs = (q: Record<string, string>) => new URLSearchParams(q).toString()
 
   function step(delta: number) {
     if (!view) return
@@ -84,7 +82,7 @@
       </p>
     </div>
     <span class="spacer"></span>
-    <a class="button primary" href="/api/matches/{id}/report.pdf?{qs(reportQuery)}" target="_blank">{t('PDF erzeugen')}</a>
+    <a class="button primary" href={printHref} target="_blank">{t('Drucken / PDF')}</a>
     {#if csvExport}
       <a class="button" href="/api/matches/{id}/export.csv">{t('CSV erzeugen')}</a>
     {/if}

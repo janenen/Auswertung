@@ -419,8 +419,8 @@ type resultsView struct {
 	Score *model.LeagueResult `json:"score,omitempty"`
 }
 
-// rankedLists holds the result lists for the PDF report.
-type rankedLists struct{ ranked, home, guest []report.RankedEntry }
+// rankedLists holds the home and guest lists for the league form.
+type rankedLists struct{ home, guest []report.RankedEntry }
 
 // results ranks the entries. For league competitions entries are split
 // into home and guest by club, keeping the reading order.
@@ -439,7 +439,9 @@ func (s *Server) results(id string) (resultsView, rankedLists, error) {
 	add := func(views *[]entryView, entries *[]report.RankedEntry, m model.Match) {
 		e := s.entry(c, m)
 		*views = append(*views, e)
-		*entries = append(*entries, report.RankedEntry{Shooter: e.Shooter, Match: m})
+		if entries != nil {
+			*entries = append(*entries, report.RankedEntry{Shooter: e.Shooter, Match: m})
+		}
 	}
 	if v.League != nil {
 		for _, m := range matches {
@@ -469,7 +471,7 @@ func (s *Server) results(id string) (resultsView, rankedLists, error) {
 	}
 	model.SortMatches(c.Modus, ptrs)
 	for _, m := range ptrs {
-		add(&res.Ranked, &lists.ranked, *m)
+		add(&res.Ranked, nil, *m)
 	}
 	return res, lists, nil
 }
@@ -546,21 +548,6 @@ func (s *Server) userByName(name string) (model.User, error) {
 		}
 	}
 	return s.store.SaveUser(model.User{Name: name})
-}
-
-func (s *Server) competitionPDF(w http.ResponseWriter, r *http.Request) {
-	res, lists, err := s.results(r.PathValue("id"))
-	if err != nil {
-		fail(w, err)
-		return
-	}
-	c := res.Competition
-	data, err := report.CompetitionPDF(c, lists.ranked, lists.home, lists.guest)
-	if err != nil {
-		fail(w, err)
-		return
-	}
-	send(w, data, "application/pdf", report.FileDate(c.Date)+"_"+c.TypeOfTarget+".pdf", false)
 }
 
 // send streams a generated file. Nothing is saved: reports and exports can

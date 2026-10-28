@@ -89,6 +89,9 @@
 {#if error}
   <p class="error">{tx(error)}</p>
 {/if}
+<!-- The browser suggests the title as file name when saving as PDF. -->
+<svelte:head><title>{c ? `Ergebnisliste_${c.name}_${c.date}`.replaceAll(' ', '_') : 'Auswertung'}</title></svelte:head>
+
 {#if res && c}
   <div class="actions head">
     <div>
@@ -98,7 +101,9 @@
     <span class="spacer"></span>
     <a class="button" href={href(c.active ? `/competitions/${id}` : '/archive')}>{t('Zurück')}</a>
     {#if res.entries.length}
-      <a class="button" href="/api/competitions/{id}/report.pdf" target="_blank">{t('PDF erzeugen')}</a>
+      <button onclick={() => window.print()} title={t('Im Druckdialog Papierformat wählen oder „Als PDF speichern“.')}
+        >{t('Drucken / PDF')}</button
+      >
       {#if res.league}
         <button onclick={downloadLeague} title={t('Füllt das RSB-Formular für Liga-Ergebnisse aus')}>{t('Liga-Formular (Excel)')}</button>
       {/if}

@@ -148,19 +148,15 @@ func TestReadingFlow(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	// Reports and exports are streamed, not saved: they carry a file name.
-	for path, disposition := range map[string]string{
-		"/api/matches/" + matchID + "/report.pdf":                         `inline; filename="Anna_`,
-		"/api/matches/" + matchID + "/report.pdf?title=Test&decimal=true": `inline; filename="Anna_`,
-		"/api/matches/" + matchID + "/export.csv":                         `attachment; filename="Anna_`,
-		"/api/competitions/" + comp.ID + "/report.pdf":                    `inline; filename="`,
-	} {
-		resp, err := http.Get(ts.URL + path)
-		if err != nil || resp.StatusCode != 200 || !strings.HasPrefix(resp.Header.Get("Content-Disposition"), disposition) {
-			t.Errorf("GET %s: %v %v", path, resp, err)
-			continue
-		}
+	// Reports are printed in the browser; only the exports remain on the server.
+	if resp, err := http.Get(ts.URL + "/api/matches/" + matchID + "/export.csv"); err != nil || resp.StatusCode != 200 ||
+		!strings.HasPrefix(resp.Header.Get("Content-Disposition"), `attachment; filename="Anna_`) {
+		t.Errorf("CSV export: %v %v", resp, err)
+	} else {
 		resp.Body.Close()
+	}
+	if code := call(t, ts, "GET", "/api/matches/"+matchID+"/report.pdf", nil, nil); code != http.StatusNotFound {
+		t.Errorf("PDF endpoint still answers: %d", code)
 	}
 
 	if code := call(t, ts, "DELETE", "/api/competitions/"+comp.ID, nil, nil); code != http.StatusConflict {

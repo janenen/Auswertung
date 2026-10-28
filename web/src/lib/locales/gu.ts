@@ -115,7 +115,10 @@ export const gu: Record<Key, string> = {
   Ergebnis: 'પરિણામ',
   'Keine Ergebnisse.': 'કોઈ પરિણામ નથી.',
   'Ergebnisliste {name}': 'પરિણામ યાદી {name}',
-  'PDF erzeugen': 'PDF બનાવો',
+  'Drucken / PDF': 'છાપો / PDF',
+  'Im Druckdialog Papierformat wählen oder „Als PDF speichern“.':
+    'છાપવાના સંવાદમાં કાગળનું કદ પસંદ કરો અથવા “PDF તરીકે સાચવો”.',
+  Zwischenergebnis: 'મધ્યવર્તી પરિણામ',
   'Füllt das RSB-Formular für Liga-Ergebnisse aus': 'લીગ પરિણામો માટે RSB ફોર્મ ભરે છે',
   'Liga-Formular (Excel)': 'લીગ ફોર્મ (Excel)',
   'Wettkampf beenden': 'સ્પર્ધા પૂર્ણ કરો',

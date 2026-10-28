@@ -10,6 +10,7 @@
   import CompetitionPage from './routes/Competition.svelte'
   import Entry from './routes/Entry.svelte'
   import Match from './routes/Match.svelte'
+  import MatchPrint from './routes/MatchPrint.svelte'
   import Results from './routes/Results.svelte'
   import Archive from './routes/Archive.svelte'
   import People from './routes/People.svelte'
@@ -26,6 +27,7 @@
     ['/competitions/:id/results', Results],
     ['/entry', Entry],
     ['/matches/:id', Match],
+    ['/matches/:id/print', MatchPrint],
     ['/archive', Archive],
     ['/people', People],
     ['/people/:id', Shooter],
@@ -173,5 +175,14 @@
   .stopped {
     text-align: center;
     padding-top: 20vh;
+  }
+  @media print {
+    header {
+      display: none;
+    }
+    main {
+      max-width: none;
+      padding: 0;
+    }
   }
 </style>

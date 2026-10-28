@@ -25,39 +25,6 @@ func testMatch(n int) model.Match {
 	return m
 }
 
-func TestMatchPDF(t *testing.T) {
-	for _, n := range []int{3, 40, 60, 145} {
-		for _, decimal := range []bool{false, true} {
-			data, err := MatchPDF(MatchInfo{Match: testMatch(n), Shooter: "Jürgen Müller", Title: "Training", Decimal: decimal})
-			if err != nil {
-				t.Fatalf("n=%d: %v", n, err)
-			}
-			if !bytes.HasPrefix(data, []byte("%PDF")) {
-				t.Fatalf("n=%d: not a PDF", n)
-			}
-		}
-	}
-	if dir := os.Getenv("REPORT_OUT"); dir != "" {
-		data, _ := MatchPDF(MatchInfo{Match: testMatch(60), Shooter: "Jürgen Müller", Club: "SV Haaren", Team: "1", Title: "Training", Decimal: false})
-		os.WriteFile(filepath.Join(dir, "match.pdf"), data, 0o644)
-	}
-}
-
-func TestCompetitionPDF(t *testing.T) {
-	c := model.Competition{Name: "Preisschießen", Date: "04.09.2023", Modus: model.ModusBest, TypeOfTarget: "LG"}
-	var entries []RankedEntry
-	for range 70 {
-		entries = append(entries, RankedEntry{Shooter: "Schütze", Match: testMatch(40)})
-	}
-	if _, err := CompetitionPDF(c, entries, nil, nil); err != nil {
-		t.Fatal(err)
-	}
-	c.Modus = model.ModusLeague
-	if _, err := CompetitionPDF(c, nil, entries[:4], entries[4:8]); err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestCSVRoundTrip(t *testing.T) {
 	m := testMatch(12)
 	target, shots, err := machine.ParseCSV(CSV(m))

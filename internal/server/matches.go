@@ -1,7 +1,6 @@
 package server
 
 import (
-	"cmp"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -59,52 +58,6 @@ func (s *Server) getMatch(w http.ResponseWriter, r *http.Request) {
 		v.Series = append(v.Series, stats(series))
 	}
 	writeJSON(w, v)
-}
-
-// matchInfo resolves the title and scoring of a match report from the
-// competition query parameter, the title/decimal parameters, or else the
-// match's competition or stored quick analysis settings.
-func (s *Server) matchInfo(r *http.Request) (report.MatchInfo, error) {
-	m, err := s.store.Match(r.PathValue("id"))
-	if err != nil {
-		return report.MatchInfo{}, err
-	}
-	info := report.MatchInfo{Match: m, Title: "Schnellauswertung"}
-	info.Shooter, info.Club, info.Team = s.names(m)
-	q := r.URL.Query()
-	compID := q.Get("competition")
-	if compID == "" && q.Get("title") == "" {
-		compID = m.Competition
-	}
-	if compID != "" {
-		c, err := s.store.Competition(compID)
-		if err != nil {
-			return report.MatchInfo{}, err
-		}
-		info.Title, info.Decimal = c.Name, c.Decimal
-	} else {
-		info.Title = cmp.Or(q.Get("title"), m.Title, info.Title)
-		info.Decimal = m.Decimal
-		if d := q.Get("decimal"); d != "" {
-			info.Decimal = d == "true"
-		}
-	}
-	return info, nil
-}
-
-func (s *Server) matchPDF(w http.ResponseWriter, r *http.Request) {
-	info, err := s.matchInfo(r)
-	if err != nil {
-		fail(w, err)
-		return
-	}
-	data, err := report.MatchPDF(info)
-	if err != nil {
-		fail(w, errBadRequest(err.Error()))
-		return
-	}
-	m := info.Match
-	send(w, data, "application/pdf", report.SafeName(info.Shooter)+"_"+report.FileDate(m.Date)+"_"+m.TypeOfTarget+".pdf", false)
 }
 
 func (s *Server) matchCSV(w http.ResponseWriter, r *http.Request) {

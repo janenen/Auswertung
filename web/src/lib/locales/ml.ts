@@ -115,7 +115,10 @@ export const ml: Record<Key, string> = {
   Ergebnis: 'ഫലം',
   'Keine Ergebnisse.': 'ഫലങ്ങളില്ല.',
   'Ergebnisliste {name}': 'ഫലപ്പട്ടിക {name}',
-  'PDF erzeugen': 'PDF സൃഷ്ടിക്കുക',
+  'Drucken / PDF': 'പ്രിന്റ് / PDF',
+  'Im Druckdialog Papierformat wählen oder „Als PDF speichern“.':
+    'പ്രിന്റ് ഡയലോഗിൽ പേപ്പർ വലുപ്പം തിരഞ്ഞെടുക്കുക അല്ലെങ്കിൽ “PDF ആയി സേവ് ചെയ്യുക”.',
+  Zwischenergebnis: 'ഇടക്കാല ഫലം',
   'Füllt das RSB-Formular für Liga-Ergebnisse aus': 'ലീഗ് ഫലങ്ങൾക്കായുള്ള RSB ഫോം പൂരിപ്പിക്കുന്നു',
   'Liga-Formular (Excel)': 'ലീഗ് ഫോം (Excel)',
   'Wettkampf beenden': 'മത്സരം അവസാനിപ്പിക്കുക',

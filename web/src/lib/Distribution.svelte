@@ -8,7 +8,18 @@
   import { meta, fmt2 } from './meta.svelte'
   import { t } from './i18n.svelte'
 
-  let { shots, type, filename = 'verteilung.svg' }: { shots: Shot[]; type: string; filename?: string } = $props()
+  let {
+    shots,
+    type,
+    filename = 'verteilung.svg',
+    light = false,
+  }: {
+    shots: Shot[]
+    type: string
+    filename?: string
+    /** Always use the light theme colors (for printing). */
+    light?: boolean
+  } = $props()
 
   // Layout in SVG units.
   const S = 420 // plot square
@@ -24,6 +35,7 @@
   const fallback = { surface: '#ffffff', text: '#1c2430', muted: '#5f6b7a', border: '#d6dce3', accent: '#1f6feb', danger: '#c62828' }
   let theme = $state(fallback)
   $effect(() => {
+    if (light) return
     const mq = window.matchMedia('(prefers-color-scheme: dark)')
     const read = () => {
       const css = getComputedStyle(document.documentElement)

@@ -230,3 +230,39 @@ tr.clickable:hover td {
   background: var(--warn-bg);
   color: var(--text);
 }
+
+/* Printing ("Drucken / PDF" uses the browser's print dialog, which also
+   chooses the paper format): always light, without interactive elements. */
+@media print {
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #eef1f4;
+    --text: #000000;
+    --muted: #4a5563;
+    --border: #c9d0d8;
+    color-scheme: light;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+  body {
+    background: #fff;
+  }
+  .no-print,
+  button,
+  .button,
+  select {
+    display: none !important;
+  }
+  .card {
+    border: none;
+    padding: 0;
+  }
+  tr {
+    break-inside: avoid;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+}

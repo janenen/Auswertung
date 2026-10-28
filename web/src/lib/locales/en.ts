@@ -114,7 +114,10 @@ export const en = {
   Ergebnis: 'Result',
   'Keine Ergebnisse.': 'No results.',
   'Ergebnisliste {name}': 'Results {name}',
-  'PDF erzeugen': 'Create PDF',
+  'Drucken / PDF': 'Print / PDF',
+  'Im Druckdialog Papierformat wählen oder „Als PDF speichern“.':
+    'Choose the paper format in the print dialog or “Save as PDF”.',
+  Zwischenergebnis: 'Intermediate result',
   'Füllt das RSB-Formular für Liga-Ergebnisse aus': 'Fills in the RSB form for league results',
   'Liga-Formular (Excel)': 'League form (Excel)',
   'Wettkampf beenden': 'Finish competition',

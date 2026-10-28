@@ -53,13 +53,11 @@ func (s *Server) routes(frontend fs.FS) http.Handler {
 	mux.HandleFunc("PATCH /api/competitions/{id}", s.updateCompetition)
 	mux.HandleFunc("DELETE /api/competitions/{id}", s.deleteCompetition)
 	mux.HandleFunc("GET /api/competitions/{id}/results", s.competitionResults)
-	mux.HandleFunc("GET /api/competitions/{id}/report.pdf", s.competitionPDF)
 	mux.HandleFunc("GET /api/competitions/{id}/league.xlsx", s.leagueXLSX)
 	mux.HandleFunc("POST /api/competitions/{id}/simulate", s.simulateLeague)
 	mux.HandleFunc("GET /api/board", s.board)
 
 	mux.HandleFunc("GET /api/matches/{id}", s.getMatch)
-	mux.HandleFunc("GET /api/matches/{id}/report.pdf", s.matchPDF)
 	mux.HandleFunc("GET /api/matches/{id}/export.csv", s.matchCSV)
 	mux.HandleFunc("GET /api/matches/{id}/qr.png", s.matchQR)
 

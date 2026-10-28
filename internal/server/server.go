@@ -14,8 +14,6 @@ import (
 )
 
 type Options struct {
-	// OutDir receives a copy of every generated report.
-	OutDir string
 	// LeagueTemplate is the path of the RSB league result form (.xlsx).
 	LeagueTemplate string
 	// Shutdown is called by the quit button and may be nil.

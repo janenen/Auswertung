@@ -125,12 +125,9 @@ func TestLeagueXLSX(t *testing.T) {
 	}
 }
 
-func TestSave(t *testing.T) {
-	dir := t.TempDir()
-	a, _ := Save(dir, []string{"Anna_B", "LG"}, "230904_LG", ".pdf", []byte("1"))
-	b, _ := Save(dir, []string{"Anna_B", "LG"}, "230904_LG", ".pdf", []byte("2"))
-	if filepath.Base(a) != "230904_LG.pdf" || filepath.Base(b) != "230904_LG_1.pdf" {
-		t.Errorf("a=%s b=%s", a, b)
+func TestFileNames(t *testing.T) {
+	if got := FileDate("04.09.2023"); got != "230904" {
+		t.Errorf("FileDate = %q", got)
 	}
 	if got := SafeName(`A/B: "C"`); got != "A_B___C_" {
 		t.Errorf("SafeName = %q", got)

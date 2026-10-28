@@ -104,8 +104,7 @@ func (s *Server) matchPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	m := info.Match
-	s.deliver(w, data, "application/pdf", []string{report.SafeName(info.Shooter), m.TypeOfTarget},
-		report.FileDate(m.Date)+"_"+m.TypeOfTarget, ".pdf", false)
+	send(w, data, "application/pdf", report.SafeName(info.Shooter)+"_"+report.FileDate(m.Date)+"_"+m.TypeOfTarget+".pdf", false)
 }
 
 func (s *Server) matchCSV(w http.ResponseWriter, r *http.Request) {
@@ -115,8 +114,7 @@ func (s *Server) matchCSV(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	shooter, _, _ := s.names(m)
-	s.deliver(w, report.CSV(m), "text/csv; charset=utf-8", []string{report.SafeName(shooter), "csv"},
-		report.FileDate(m.Date), ".csv", true)
+	send(w, report.CSV(m), "text/csv; charset=utf-8", report.SafeName(shooter)+"_"+report.FileDate(m.Date)+".csv", true)
 }
 
 func (s *Server) matchQR(w http.ResponseWriter, r *http.Request) {

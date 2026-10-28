@@ -8,8 +8,8 @@ creates PDF reports.
 Auswertung is a local web app: a single executable starts a server on
 `http://127.0.0.1:8080` and opens the browser. Data is stored in the SQLite
 database `./db/auswertung.db` (data of the former Python version in `./db/*.json`
-is imported on first start and then moved to `./db/legacy`) and reports are written to
-`./output`.
+is imported on first start and then moved to `./db/legacy`); nothing else is
+written to disk: reports and exports are created on demand.
 
 To test without hardware, start with `-simulator`: a "Rika-Simulator" is then
 offered next to the real machines and produces random shots on the
@@ -20,10 +20,10 @@ three random results each for the home and the guest team.
 ## Usage
 
 Download `auswertung.exe` from the releases and start it in the folder that
-should contain `db` and `output`. Options:
+should contain `db`. Options:
 
 ```
-auswertung -addr 127.0.0.1:8080 -data db -out output -no-browser -simulator \
+auswertung -addr 127.0.0.1:8080 -data db -no-browser -simulator \
            -league-template extern/formular_ligaergebnisse_kr_bez_ll.xlsx
 ```
 

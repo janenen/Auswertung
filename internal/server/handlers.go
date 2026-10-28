@@ -3,7 +3,6 @@ package server
 import (
 	"cmp"
 	"fmt"
-	"log"
 	"net/http"
 	"slices"
 	"strconv"
@@ -561,23 +560,17 @@ func (s *Server) competitionPDF(w http.ResponseWriter, r *http.Request) {
 		fail(w, err)
 		return
 	}
-	s.deliver(w, data, "application/pdf", []string{"competitions", report.SafeName(c.Name)},
-		report.FileDate(c.Date)+"_"+c.TypeOfTarget, ".pdf", false)
+	send(w, data, "application/pdf", report.FileDate(c.Date)+"_"+c.TypeOfTarget+".pdf", false)
 }
 
-// deliver saves a generated file below the output directory and sends it.
-func (s *Server) deliver(w http.ResponseWriter, data []byte, contentType string, dir []string, base, ext string, attachment bool) {
-	path, err := report.Save(s.opts.OutDir, dir, base, ext, data)
-	if err != nil {
-		log.Printf("saving %s: %v", base+ext, err)
-	} else {
-		log.Printf("saved %s", path)
-	}
+// send streams a generated file. Nothing is saved: reports and exports can
+// always be created again.
+func send(w http.ResponseWriter, data []byte, contentType, filename string, attachment bool) {
 	disposition := "inline"
 	if attachment {
 		disposition = "attachment"
 	}
 	w.Header().Set("Content-Type", contentType)
-	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, base+ext))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, filename))
 	w.Write(data)
 }

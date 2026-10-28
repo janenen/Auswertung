@@ -175,7 +175,6 @@ export const gu: Record<Key, string> = {
   'Wird gerade eingelesen': 'હાલમાં વાંચી રહ્યાં છીએ',
 
   // match
-  'Wird zusätzlich im Ausgabeordner gespeichert': 'આઉટપુટ ફોલ્ડરમાં પણ સાચવવામાં આવે છે',
   'CSV erzeugen': 'CSV બનાવો',
   'Zum Wettkampf': 'સ્પર્ધા પર જાઓ',
   '+ Nächster Beitrag': '+ આગલો પ્રવેશ',

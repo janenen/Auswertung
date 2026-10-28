@@ -174,7 +174,6 @@ export const en = {
   'Wird gerade eingelesen': 'Reading in progress',
 
   // match
-  'Wird zusätzlich im Ausgabeordner gespeichert': 'Also saved in the output folder',
   'CSV erzeugen': 'Create CSV',
   'Zum Wettkampf': 'To competition',
   '+ Nächster Beitrag': '+ Next entry',

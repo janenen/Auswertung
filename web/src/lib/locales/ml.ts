@@ -175,7 +175,6 @@ export const ml: Record<Key, string> = {
   'Wird gerade eingelesen': 'ഇപ്പോൾ റീഡ് ചെയ്യുന്നു',
 
   // match
-  'Wird zusätzlich im Ausgabeordner gespeichert': 'ഔട്ട്പുട്ട് ഫോൾഡറിലും സേവ് ചെയ്യുന്നു',
   'CSV erzeugen': 'CSV സൃഷ്ടിക്കുക',
   'Zum Wettkampf': 'മത്സരത്തിലേക്ക്',
   '+ Nächster Beitrag': '+ അടുത്ത എൻട്രി',

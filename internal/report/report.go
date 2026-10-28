@@ -5,8 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"math"
-	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -284,7 +282,7 @@ func QRPNG(m model.Match) ([]byte, error) {
 	return qrcode.Encode(QRString(m), qrcode.Medium, 512)
 }
 
-// FileDate converts dd.mm.yyyy to yymmdd as used in output file names.
+// FileDate converts dd.mm.yyyy to yymmdd as used in download file names.
 func FileDate(date string) string {
 	if t, err := time.Parse("02.01.2006", date); err == nil {
 		return t.Format("060102")
@@ -292,7 +290,7 @@ func FileDate(date string) string {
 	return SafeName(date)
 }
 
-// SafeName makes s usable as a file or directory name.
+// SafeName makes s usable as a file name.
 func SafeName(s string) string {
 	s = strings.ReplaceAll(strings.TrimSpace(s), " ", "_")
 	return strings.Map(func(r rune) rune {
@@ -301,22 +299,4 @@ func SafeName(s string) string {
 		}
 		return r
 	}, s)
-}
-
-// Save writes data to outDir/dir/base.ext, appending _1, _2, ... if the
-// file exists, and returns the path.
-func Save(outDir string, dir []string, base, ext string, data []byte) (string, error) {
-	parts := append([]string{outDir}, dir...)
-	path := filepath.Join(parts...)
-	if err := os.MkdirAll(path, 0o755); err != nil {
-		return "", err
-	}
-	name := filepath.Join(path, base+ext)
-	for n := 1; ; n++ {
-		if _, err := os.Stat(name); os.IsNotExist(err) {
-			break
-		}
-		name = filepath.Join(path, fmt.Sprintf("%s_%d%s", base, n, ext))
-	}
-	return name, os.WriteFile(name, data, 0o644)
 }

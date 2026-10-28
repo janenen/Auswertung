@@ -25,7 +25,6 @@ import (
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	dataDir := flag.String("data", "db", "database directory")
-	outDir := flag.String("out", "output", "directory for generated reports")
 	leagueTemplate := flag.String("league-template", filepath.Join("extern", "formular_ligaergebnisse_kr_bez_ll.xlsx"), "RSB league result form (.xlsx)")
 	noBrowser := flag.Bool("no-browser", false, "do not open the browser")
 	simulator := flag.Bool("simulator", false, "offer a simulated RIKA SAG-2 for testing without hardware")
@@ -52,7 +51,6 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	srv := &http.Server{Handler: server.New(st, web.Dist(), server.Options{
-		OutDir:         *outDir,
 		LeagueTemplate: *leagueTemplate,
 		Shutdown:       stop,
 	})}
@@ -63,7 +61,7 @@ func main() {
 		srv.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("Auswertung läuft auf %s (Daten: %s, Ausgabe: %s)", url, *dataDir, *outDir)
+	log.Printf("Auswertung läuft auf %s (Daten: %s)", url, *dataDir)
 	if !*noBrowser {
 		openBrowser(url)
 	}

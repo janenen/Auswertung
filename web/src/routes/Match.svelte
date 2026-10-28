@@ -84,12 +84,7 @@
       </p>
     </div>
     <span class="spacer"></span>
-    <a
-      class="button primary"
-      href="/api/matches/{id}/report.pdf?{qs(reportQuery)}"
-      target="_blank"
-      title={t('Wird zusätzlich im Ausgabeordner gespeichert')}>{t('PDF erzeugen')}</a
-    >
+    <a class="button primary" href="/api/matches/{id}/report.pdf?{qs(reportQuery)}" target="_blank">{t('PDF erzeugen')}</a>
     {#if csvExport}
       <a class="button" href="/api/matches/{id}/export.csv">{t('CSV erzeugen')}</a>
     {/if}

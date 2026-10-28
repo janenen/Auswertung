@@ -37,7 +37,7 @@ func newTestServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	st := openStore(t)
 	frontend := fstest.MapFS{"index.html": {Data: []byte("<html>app</html>")}}
-	ts := httptest.NewServer(New(st, frontend, Options{OutDir: t.TempDir(), LeagueTemplate: filepath.Join("..", "..", "extern", "formular_ligaergebnisse_kr_bez_ll.xlsx")}))
+	ts := httptest.NewServer(New(st, frontend, Options{LeagueTemplate: filepath.Join("..", "..", "extern", "formular_ligaergebnisse_kr_bez_ll.xlsx")}))
 	t.Cleanup(ts.Close)
 	return ts
 }
@@ -148,16 +148,19 @@ func TestReadingFlow(t *testing.T) {
 		resp.Body.Close()
 	}
 
-	for _, path := range []string{
-		"/api/matches/" + matchID + "/report.pdf",
-		"/api/matches/" + matchID + "/report.pdf?title=Test&decimal=true",
-		"/api/matches/" + matchID + "/export.csv",
-		"/api/matches/" + matchID + "/qr.png",
-		"/api/competitions/" + comp.ID + "/report.pdf",
+	// Reports and exports are streamed, not saved: they carry a file name.
+	for path, disposition := range map[string]string{
+		"/api/matches/" + matchID + "/report.pdf":                         `inline; filename="Anna_`,
+		"/api/matches/" + matchID + "/report.pdf?title=Test&decimal=true": `inline; filename="Anna_`,
+		"/api/matches/" + matchID + "/export.csv":                         `attachment; filename="Anna_`,
+		"/api/competitions/" + comp.ID + "/report.pdf":                    `inline; filename="`,
 	} {
-		if code := call(t, ts, "GET", path, nil, nil); code != 200 {
-			t.Errorf("GET %s: %d", path, code)
+		resp, err := http.Get(ts.URL + path)
+		if err != nil || resp.StatusCode != 200 || !strings.HasPrefix(resp.Header.Get("Content-Disposition"), disposition) {
+			t.Errorf("GET %s: %v %v", path, resp, err)
+			continue
 		}
+		resp.Body.Close()
 	}
 
 	if code := call(t, ts, "DELETE", "/api/competitions/"+comp.ID, nil, nil); code != http.StatusConflict {

@@ -36,8 +36,8 @@ func (s *Server) leagueXLSX(w http.ResponseWriter, r *http.Request) {
 		fail(w, err)
 		return
 	}
-	s.deliver(w, data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", nil,
-		report.FileDate(res.Competition.Date)+"_Liga", ".xlsx", true)
+	send(w, data, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		report.FileDate(res.Competition.Date)+"_Liga.xlsx", true)
 }
 
 // boardTile is one shooter on the visualisation board.

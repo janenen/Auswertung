@@ -2,17 +2,33 @@
   import { api, type CompetitionView } from '../lib/api'
   import { href, navigate } from '../lib/router.svelte'
   import { t, tx } from '../lib/i18n.svelte'
+  import { meta } from '../lib/meta.svelte'
 
   let { id }: { id: string } = $props()
 
   let view = $state<CompetitionView | null>(null)
   let error = $state('')
-  $effect(() => {
+  let simulating = $state(false)
+
+  function load() {
     api
       .competition(id)
       .then((v) => (view = v))
       .catch((e) => (error = e.message))
-  })
+  }
+  $effect(load)
+
+  async function simulate() {
+    simulating = true
+    try {
+      await api.simulateLeague(id)
+      load()
+    } catch (e) {
+      error = (e as Error).message
+    } finally {
+      simulating = false
+    }
+  }
 
   const c = $derived(view?.competition)
   const incomplete = $derived(view?.entries.filter((e) => e.active) ?? [])
@@ -40,6 +56,11 @@
     </div>
     <span class="spacer"></span>
     <a class="button" href={href(`/competitions/${id}/results`)}>{t('Wettkampfergebnisse')}</a>
+    {#if c.active && view.league && meta.simulator}
+      <button onclick={simulate} disabled={simulating} title={t('Erzeugt je 3 zufällige Ergebnisse für Heim und Gast')}
+        >{t('Ergebnisse simulieren')}</button
+      >
+    {/if}
     {#if c.active}
       <a class="button primary" href={href(`/competitions/${id}/entry`)}>{t('+ Beitrag hinzufügen')}</a>
     {/if}

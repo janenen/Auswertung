@@ -151,6 +151,8 @@ export interface Meta {
   modi: string[]
   leagueModus: string
   leagues: string[]
+  /** Simulation mode (-simulator): simulated machine and league results. */
+  simulator: boolean
 }
 
 export interface Machine {
@@ -234,6 +236,7 @@ export const api = {
   setActive: (id: string, active: boolean) =>
     request<void>('PATCH', `/competitions/${id}`, { active }),
   deleteCompetition: (id: string) => request<void>('DELETE', `/competitions/${id}`),
+  simulateLeague: (id: string) => request<{ matchIds: string[] }>('POST', `/competitions/${id}/simulate`),
 
   match: (id: string) => get<MatchView>(`/matches/${id}`),
   board: () => get<BoardCompetition[]>('/board'),

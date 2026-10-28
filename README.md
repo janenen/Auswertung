@@ -14,6 +14,8 @@ is imported on first start and then moved to `./db/legacy`) and reports are writ
 To test without hardware, start with `-simulator`: a "Rika-Simulator" is then
 offered next to the real machines and produces random shots on the
 competition's target type (built-in port of https://github.com/janenen/simulator).
+League competitions then also get an "Ergebnisse simulieren" button that adds
+three random results each for the home and the guest team.
 
 ## Usage
 

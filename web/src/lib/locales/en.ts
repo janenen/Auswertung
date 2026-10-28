@@ -56,6 +56,8 @@ export const en = {
   'Gast: {club} – {team}': 'Guest: {club} – {team}',
   Wettkampfergebnisse: 'Competition results',
   '+ Beitrag hinzufügen': '+ Add entry',
+  'Ergebnisse simulieren': 'Simulate results',
+  'Erzeugt je 3 zufällige Ergebnisse für Heim und Gast': 'Creates 3 random results each for home and guest',
   'Unvollständige Ergebnisse:': 'Incomplete results:',
   Fortsetzen: 'Continue',
   'Teilnehmer ({n})': 'Participants ({n})',
@@ -240,6 +242,7 @@ export const en = {
   'Wettkampf ist kein Ligawettkampf': 'Competition is not a league match',
   'Liga-Formular nicht gefunden': 'League form not found',
   'Name fehlt': 'Name missing',
+  'Simulator ist nicht aktiviert': 'Simulator is not enabled',
 }
 
 export type Key = keyof typeof en

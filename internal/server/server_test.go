@@ -252,6 +252,52 @@ func TestBoard(t *testing.T) {
 	}
 }
 
+func TestSimulateLeague(t *testing.T) {
+	ts := newTestServer(t)
+	var home, guest, team, league struct{ ID string }
+	call(t, ts, "POST", "/api/clubs", map[string]string{"name": "SV Heim"}, &home)
+	call(t, ts, "POST", "/api/clubs", map[string]string{"name": "SV Gast"}, &guest)
+	call(t, ts, "POST", "/api/teams", map[string]string{"name": "1"}, &team)
+	call(t, ts, "POST", "/api/competitions", map[string]any{
+		"name": "Liga", "count": 20, "shots_per_target": 1, "type_of_target": "LP",
+		"modus":      "Liga des RSB (Kreis/Bezirk/Landesliga)",
+		"leagueData": map[string]string{"league": "Kreisliga", "home_club": home.ID, "home_team": team.ID, "guest_club": guest.ID, "guest_team": team.ID},
+	}, &league)
+	path := "/api/competitions/" + league.ID + "/simulate"
+
+	if code := call(t, ts, "POST", path, nil, nil); code != 400 {
+		t.Errorf("simulate without simulator: %d", code)
+	}
+	machine.SetSimulator(true)
+	defer machine.SetSimulator(false)
+	for range 2 {
+		if code := call(t, ts, "POST", path, nil, nil); code != 200 {
+			t.Fatalf("simulate: %d", code)
+		}
+	}
+
+	var res resultsView
+	call(t, ts, "GET", "/api/competitions/"+league.ID+"/results", nil, &res)
+	if len(res.Home) != 6 || len(res.Guest) != 6 {
+		t.Fatalf("home %d, guest %d entries", len(res.Home), len(res.Guest))
+	}
+	for _, e := range append(res.Home, res.Guest...) {
+		if e.Shots != 20 || e.Active {
+			t.Errorf("entry = %+v", e)
+		}
+	}
+	if s := res.Score; s == nil || !s.Complete || len(s.HomePlaces) != 6 || len(s.Pairings) != 3 ||
+		s.HomePoints+s.GuestPoints != 6 || s.HomeTeamPoints+s.GuestTeamPoints != 2 {
+		t.Errorf("score = %+v", res.Score)
+	}
+	// Repeated simulations reuse the six simulated shooters.
+	var users []model.User
+	call(t, ts, "GET", "/api/users", nil, &users)
+	if len(users) != 6 {
+		t.Errorf("%d users", len(users))
+	}
+}
+
 func TestLeagueExport(t *testing.T) {
 	ts := newTestServer(t)
 	var home, guest, team struct{ ID string }

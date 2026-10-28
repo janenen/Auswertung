@@ -57,6 +57,8 @@ export const gu: Record<Key, string> = {
   'Gast: {club} – {team}': 'મહેમાન: {club} – {team}',
   Wettkampfergebnisse: 'સ્પર્ધાનાં પરિણામો',
   '+ Beitrag hinzufügen': '+ પ્રવેશ ઉમેરો',
+  'Ergebnisse simulieren': 'પરિણામોનું સિમ્યુલેશન કરો',
+  'Erzeugt je 3 zufällige Ergebnisse für Heim und Gast': 'ઘરેલુ અને મહેમાન બંને માટે 3-3 રેન્ડમ પરિણામો બનાવે છે',
   'Unvollständige Ergebnisse:': 'અધૂરાં પરિણામો:',
   Fortsetzen: 'ચાલુ રાખો',
   'Teilnehmer ({n})': 'સહભાગીઓ ({n})',
@@ -241,4 +243,5 @@ export const gu: Record<Key, string> = {
   'Wettkampf ist kein Ligawettkampf': 'આ સ્પર્ધા લીગ મેચ નથી',
   'Liga-Formular nicht gefunden': 'લીગ ફોર્મ મળ્યું નથી',
   'Name fehlt': 'નામ ખૂટે છે',
+  'Simulator ist nicht aktiviert': 'સિમ્યુલેટર સક્રિય નથી',
 }

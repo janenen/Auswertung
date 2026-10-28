@@ -7,6 +7,7 @@ export const meta = $state<Meta>({
   modi: [],
   leagueModus: '',
   leagues: [],
+  simulator: false,
 })
 
 export function today(): string {

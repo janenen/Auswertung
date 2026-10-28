@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/janenen/auswertung/internal/machine"
 	"github.com/janenen/auswertung/internal/model"
 	"github.com/janenen/auswertung/internal/report"
+	"github.com/janenen/auswertung/internal/store"
 )
 
 func (s *Server) meta(w http.ResponseWriter, r *http.Request) {
@@ -20,6 +22,7 @@ func (s *Server) meta(w http.ResponseWriter, r *http.Request) {
 		"modi":        model.Modi,
 		"leagueModus": model.ModusLeague,
 		"leagues":     model.Leagues,
+		"simulator":   machine.SimulatorEnabled(),
 	})
 }
 
@@ -418,6 +421,71 @@ func (s *Server) competitionResults(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, res)
+}
+
+// simulatedPerSide is the number of results simulateLeague records per team.
+const simulatedPerSide = 3
+
+// simulateLeague records random results for the home and guest team of a
+// league competition (simulation mode only). Repeated calls reuse the
+// simulated shooters.
+func (s *Server) simulateLeague(w http.ResponseWriter, r *http.Request) {
+	if !machine.SimulatorEnabled() {
+		fail(w, errBadRequest("Simulator ist nicht aktiviert"))
+		return
+	}
+	v, err := s.competitionView(r.PathValue("id"))
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	c := v.Competition
+	switch {
+	case v.League == nil:
+		fail(w, errBadRequest("Wettkampf ist kein Ligawettkampf"))
+		return
+	case !c.Active:
+		fail(w, errBadRequest("Wettkampf ist beendet"))
+		return
+	}
+	sides := []struct{ name, club, team string }{
+		{"Simulierter Heimschütze", v.League.HomeClub, v.League.HomeTeam},
+		{"Simulierter Gastschütze", v.League.GuestClub, v.League.GuestTeam},
+	}
+	ids := []string{}
+	for _, side := range sides {
+		for i := 1; i <= simulatedPerSide; i++ {
+			user, err := s.userByName(fmt.Sprintf("%s %d", side.name, i))
+			if err != nil {
+				fail(w, err)
+				return
+			}
+			m, err := s.store.RecordNewMatch(store.NewMatch{
+				Shooter: user.ID, Club: side.club, Team: side.team, TypeOfTarget: c.TypeOfTarget,
+				Competition: c.ID, Count: c.Count, Shots: machine.SimulatedShots(c.TypeOfTarget, c.Count),
+			})
+			if err != nil {
+				fail(w, err)
+				return
+			}
+			ids = append(ids, m.ID)
+		}
+	}
+	writeJSON(w, map[string][]string{"matchIds": ids})
+}
+
+// userByName returns the user with the given name, creating it if needed.
+func (s *Server) userByName(name string) (model.User, error) {
+	users, err := s.store.Users()
+	if err != nil {
+		return model.User{}, err
+	}
+	for _, u := range users {
+		if u.Name == name {
+			return u, nil
+		}
+	}
+	return s.store.SaveUser(model.User{Name: name})
 }
 
 func (s *Server) competitionPDF(w http.ResponseWriter, r *http.Request) {

@@ -57,6 +57,8 @@ export const ml: Record<Key, string> = {
   'Gast: {club} – {team}': 'അതിഥി: {club} – {team}',
   Wettkampfergebnisse: 'മത്സരഫലങ്ങൾ',
   '+ Beitrag hinzufügen': '+ എൻട്രി ചേർക്കുക',
+  'Ergebnisse simulieren': 'ഫലങ്ങൾ സിമുലേറ്റ് ചെയ്യുക',
+  'Erzeugt je 3 zufällige Ergebnisse für Heim und Gast': 'ഹോം, അതിഥി ടീമുകൾക്ക് 3 വീതം ക്രമരഹിത ഫലങ്ങൾ സൃഷ്ടിക്കുന്നു',
   'Unvollständige Ergebnisse:': 'അപൂർണ്ണമായ ഫലങ്ങൾ:',
   Fortsetzen: 'തുടരുക',
   'Teilnehmer ({n})': 'പങ്കെടുക്കുന്നവർ ({n})',
@@ -241,4 +243,5 @@ export const ml: Record<Key, string> = {
   'Wettkampf ist kein Ligawettkampf': 'ഇത് ഒരു ലീഗ് മത്സരമല്ല',
   'Liga-Formular nicht gefunden': 'ലീഗ് ഫോം കണ്ടെത്തിയില്ല',
   'Name fehlt': 'പേര് നൽകിയിട്ടില്ല',
+  'Simulator ist nicht aktiviert': 'സിമുലേറ്റർ സജീവമല്ല',
 }

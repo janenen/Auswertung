@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 "Auswertung" evaluates sport-shooting results: it reads shots from scoring machines (RIKA SAG-2 via serial port) or files, manages competitions/shooters/clubs/teams/RSB league matches, and exports PDFs, CSVs and QR codes. It is a **local web app**: a Go server with an embedded Svelte 5 SPA, shipped as one executable that opens the browser. UI text is German. It replaced a Python/Tkinter app (see git history before the `go-webapp` branch); the Python code is the reference for not-yet-ported features.
 
-For testing without hardware, `-simulator` enables a built-in RIKA simulator (`rika:SIM`, port of https://github.com/janenen/simulator).
+For testing without hardware, `-simulator` enables a built-in RIKA simulator (`rika:SIM`, port of https://github.com/janenen/simulator) and a "Ergebnisse simulieren" button on league competitions (`POST /api/competitions/{id}/simulate`: 3 random results each for home and guest, reusing the shooters "Simulierter Heim-/Gastschütze 1–3").
 
 ## Commands
 

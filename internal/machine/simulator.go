@@ -37,31 +37,60 @@ func SetSimulator(enabled bool) { simulatorEnabled = enabled }
 // SimulatorEnabled reports whether the app runs in simulation mode.
 func SimulatorEnabled() bool { return simulatorEnabled }
 
-// SimulatedShots returns n random shots on the target type, with the
-// precision a RIKA reports.
+// SimulatedShots returns n shots of one random shooter on the target type,
+// with the precision a RIKA reports.
 func SimulatedShots(target string, n int) model.Shots {
-	g, ok := model.Targets[target]
-	if !ok {
-		g = model.Targets["LG"]
-	}
+	p := newSimShooter(target)
 	shots := make(model.Shots, n)
 	for i := range shots {
-		shots[i] = randomShot(g)
+		shots[i] = p.shot()
 	}
 	return shots
 }
 
-// randomShot follows the distance distribution of the original simulator:
-// denser near the centre.
-func randomShot(g model.TargetGeometry) model.Shot {
-	u := rand.Float64()
-	t := u * u * 0.88 * g.Width() / 2
-	phi := rand.Float64() * 2 * math.Pi
+// Shot groups are normally distributed around a slightly shifted centre.
+// The parameters are in ring widths (LG: 2.5 mm), fitted to a real LG
+// result of 40 shots (spread 2.39/1.90 mm, centre +0.31/-0.46 mm, 376
+// rings), and vary between simulated shooters.
+const (
+	simSpread    = 0.86 // mean spread (standard deviation) per axis: 2.15 mm on LG
+	simSpreadVar = 0.25 // log-normal variation of the spread between shooters
+	simEllipse   = 0.15 // log-normal variation of the x/y spread ratio
+	simCentre    = 0.15 // standard deviation of the group centre
+)
+
+// simShooter is the shot group of one simulated shooter (1/100 mm).
+type simShooter struct {
+	g              model.TargetGeometry
+	cx, cy, sx, sy float64
+}
+
+func newSimShooter(target string) simShooter {
+	g, ok := model.Targets[target]
+	if !ok {
+		g = model.Targets["LG"]
+	}
+	w := g.RingIncrement
+	spread := simSpread * w * math.Exp(simSpreadVar*rand.NormFloat64())
+	ratio := math.Exp(simEllipse * rand.NormFloat64())
+	return simShooter{
+		g:  g,
+		cx: simCentre * w * rand.NormFloat64(),
+		cy: simCentre * w * rand.NormFloat64(),
+		sx: spread * math.Sqrt(ratio),
+		sy: spread / math.Sqrt(ratio),
+	}
+}
+
+func (p simShooter) shot() model.Shot {
+	x := p.cx + p.sx*rand.NormFloat64()
+	y := p.cy + p.sy*rand.NormFloat64()
+	t := math.Hypot(x, y)
 	return model.Shot{
-		Ringe:  math.Round(simRing(g, t)*10) / 10,
+		Ringe:  math.Round(simRing(p.g, t)*10) / 10,
 		Teiler: math.Floor(t*10) / 10,
-		X:      math.Trunc(t*math.Cos(phi)) / 100,
-		Y:      math.Trunc(t*math.Sin(phi)) / 100,
+		X:      math.Trunc(x) / 100,
+		Y:      math.Trunc(y) / 100,
 	}
 }
 
@@ -72,11 +101,12 @@ type simulator struct {
 	pending []byte
 	notify  chan struct{}
 
-	target string
-	state  int // 0 idle, 1 ready, 2 after ESC, 3 reading parameter
-	param  byte
-	digits []byte
-	delay  int
+	target  string
+	shooter simShooter
+	state   int // 0 idle, 1 ready, 2 after ESC, 3 reading parameter
+	param   byte
+	digits  []byte
+	delay   int
 
 	serie, teiler, faktor, schuss, zehntel int
 }
@@ -86,12 +116,13 @@ func newSimulator(target string) *simulator {
 		target = "LG"
 	}
 	return &simulator{
-		notify: make(chan struct{}, 1),
-		target: target,
-		delay:  simulatorDelay,
-		serie:  10,
-		faktor: 10,
-		schuss: 1,
+		notify:  make(chan struct{}, 1),
+		target:  target,
+		shooter: newSimShooter(target),
+		delay:   simulatorDelay,
+		serie:   10,
+		faktor:  10,
+		schuss:  1,
 	}
 }
 
@@ -208,7 +239,7 @@ func (s *simulator) handle(c byte) {
 
 // shot returns a complete shot message: SOH, header, values, EOT, checksum.
 func (s *simulator) shot() []byte {
-	shot := randomShot(model.Targets[s.target])
+	shot := s.shooter.shot()
 	tenths := func(v float64) int { return int(math.Round(v * 10)) }
 	hundredths := func(v float64) int { return int(math.Round(v * 100)) }
 
@@ -223,8 +254,13 @@ func (s *simulator) shot() []byte {
 	return append(msg, sum)
 }
 
+// simRingOffset shifts the tenth boundaries outwards by 0.05 mm, as the
+// original simulator did; it reproduces the rings of real RIKA results.
+const simRingOffset = 5
+
 // simRing is the decimal ring value of a shot at distance t (1/100 mm).
 func simRing(g model.TargetGeometry, t float64) float64 {
+	t = math.Max(t-simRingOffset, 0)
 	ten := g.RadiusTen + g.RadiusCalibre
 	if t < ten {
 		return 10.9 - math.Floor(t/(ten/10))/10

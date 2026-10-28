@@ -133,13 +133,47 @@ func TestSimulator(t *testing.T) {
 	}
 }
 
+// Rings and Teiler of a real RIKA result on LG, including tenth boundaries.
 func TestSimRing(t *testing.T) {
 	g := model.Targets["LG"]
-	for _, c := range []struct{ t, want float64 }{{0, 10.9}, {249, 10}, {250, 9.9}, {499, 9}, {2499, 1}, {2500, 0}} {
+	for _, c := range []struct{ t, want float64 }{
+		{0, 10.9}, {42.8, 10.8}, {71.1, 10.7}, {96.4, 10.6}, {101, 10.6}, {109.9, 10.5}, {129.4, 10.5},
+		{132, 10.4}, {154.3, 10.4}, {231.3, 10}, {252.5, 10}, {265.4, 9.9}, {348.9, 9.6}, {352.3, 9.6},
+		{364.2, 9.5}, {451.3, 9.2}, {529.3, 8.9}, {563.6, 8.7}, {577.8, 8.7}, {592.3, 8.6}, {2505, 0},
+	} {
 		if got := simRing(g, c.t); math.Abs(got-c.want) > 1e-9 {
 			t.Errorf("simRing(%v) = %v, want %v", c.t, got, c.want)
 		}
 	}
+}
+
+// Simulated shooters resemble real results: the sample scored 376 of 400
+// with all shots from 8.6 to 10.8.
+func TestSimulatedShots(t *testing.T) {
+	const shooters, n = 300, 40
+	var total, worst, outliers float64
+	for range shooters {
+		shots := SimulatedShots("LG", n)
+		if len(shots) != n {
+			t.Fatalf("%d shots", len(shots))
+		}
+		sum := float64(shots.SummeGanz())
+		total += sum
+		worst = max(worst, 400-sum)
+		for _, s := range shots {
+			if s.Ringe < 7 {
+				outliers++
+			}
+		}
+	}
+	mean := total / shooters
+	if mean < 365 || mean > 385 {
+		t.Errorf("mean result %.1f, want about 376", mean)
+	}
+	if outliers/(shooters*n) > 0.01 {
+		t.Errorf("%.1f%% of shots below 7", 100*outliers/(shooters*n))
+	}
+	t.Logf("mean %.1f, worst %.0f, below 7: %.2f%%", mean, 400-worst, 100*outliers/(shooters*n))
 }
 
 func TestCSV(t *testing.T) {

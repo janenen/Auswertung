@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type CompetitionSummary } from '../lib/api'
   import { href } from '../lib/router.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let competitions = $state<CompetitionSummary[] | null>(null)
   let error = $state('')
@@ -11,32 +12,32 @@
 </script>
 
 <div class="actions head">
-  <h1>Laufende Wettkämpfe</h1>
+  <h1>{t('Laufende Wettkämpfe')}</h1>
   <span class="spacer"></span>
-  <a class="button" href={href('/quick')}>Schnellauswertung</a>
-  <a class="button primary" href={href('/competitions/new')}>+ Wettkampf hinzufügen</a>
+  <a class="button" href={href('/quick')}>{t('Schnellauswertung')}</a>
+  <a class="button primary" href={href('/competitions/new')}>{t('+ Wettkampf hinzufügen')}</a>
 </div>
 
 {#if error}
-  <p class="error">{error}</p>
+  <p class="error">{tx(error)}</p>
 {:else if competitions === null}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {:else if competitions.length === 0}
+  {@const [before, after] = t(
+    'Lege einen neuen Wettkampf an, lade einen aus dem {archive} oder starte eine Schnellauswertung, die keinem Wettkampf zugeordnet wird.',
+  ).split('{archive}')}
   <div class="card empty">
-    <p>Kein laufender Wettkampf.</p>
-    <p class="muted">
-      Lege einen neuen Wettkampf an, lade einen aus dem <a href={href('/archive')}>Archiv</a> oder starte eine
-      Schnellauswertung, die keinem Wettkampf zugeordnet wird.
-    </p>
+    <p>{t('Kein laufender Wettkampf.')}</p>
+    <p class="muted">{before}<a href={href('/archive')}>{t('Archiv')}</a>{after}</p>
   </div>
 {:else}
   <div class="grid">
     {#each competitions as c (c.id)}
       <a class="card competition" href={href(`/competitions/${c.id}`)}>
         <strong>{c.name}</strong>
-        <span class="muted">{c.date} · {c.type_of_target} · {c.count} Schuss</span>
-        <span class="muted">{c.modus}</span>
-        <span class="count">{c.entryCount} {c.entryCount === 1 ? 'Beitrag' : 'Beiträge'}</span>
+        <span class="muted">{c.date} · {c.type_of_target} · {t('{n} Schuss', { n: c.count })}</span>
+        <span class="muted">{tx(c.modus)}</span>
+        <span class="count">{t(c.entryCount === 1 ? '{n} Beitrag' : '{n} Beiträge', { n: c.entryCount })}</span>
       </a>
     {/each}
   </div>

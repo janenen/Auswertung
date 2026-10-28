@@ -2,6 +2,7 @@
   import { api, type Entry, type Results } from '../lib/api'
   import { href, navigate } from '../lib/router.svelte'
   import Confirm from '../lib/Confirm.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { id }: { id: string } = $props()
 
@@ -63,10 +64,10 @@
       <thead>
         <tr>
           <th class="num">#</th>
-          <th>Schütze</th>
-          {#if ranked}<th>Verein</th>{/if}
-          <th>Serien</th>
-          <th class="num">{ranked ? 'Wertung' : 'Ergebnis'}</th>
+          <th>{t('Schütze')}</th>
+          {#if ranked}<th>{t('Verein')}</th>{/if}
+          <th>{t('Serien')}</th>
+          <th class="num">{t(ranked ? 'Wertung' : 'Ergebnis')}</th>
         </tr>
       </thead>
       <tbody>
@@ -79,7 +80,7 @@
             <td class="num"><strong>{ranked ? e.value : e.summeGanz}</strong></td>
           </tr>
         {:else}
-          <tr><td colspan="5" class="muted">Keine Ergebnisse.</td></tr>
+          <tr><td colspan="5" class="muted">{t('Keine Ergebnisse.')}</td></tr>
         {/each}
       </tbody>
     </table>
@@ -87,26 +88,26 @@
 {/snippet}
 
 {#if error}
-  <p class="error">{error}</p>
+  <p class="error">{tx(error)}</p>
 {/if}
 {#if res && c}
   <div class="actions head">
     <div>
-      <h1>Ergebnisliste {c.name}</h1>
-      <p class="muted sub">{c.date} · {c.modus} {#if !c.active}<span class="badge">beendet</span>{/if}</p>
+      <h1>{t('Ergebnisliste {name}', { name: c.name })}</h1>
+      <p class="muted sub">{c.date} · {tx(c.modus)} {#if !c.active}<span class="badge">{t('beendet')}</span>{/if}</p>
     </div>
     <span class="spacer"></span>
-    <a class="button" href={href(c.active ? `/competitions/${id}` : '/archive')}>Zurück</a>
+    <a class="button" href={href(c.active ? `/competitions/${id}` : '/archive')}>{t('Zurück')}</a>
     {#if res.entries.length}
-      <a class="button" href="/api/competitions/{id}/report.pdf" target="_blank">PDF erzeugen</a>
+      <a class="button" href="/api/competitions/{id}/report.pdf" target="_blank">{t('PDF erzeugen')}</a>
       {#if res.league}
-        <button onclick={downloadLeague} title="Füllt das RSB-Formular für Liga-Ergebnisse aus">Liga-Formular (Excel)</button>
+        <button onclick={downloadLeague} title={t('Füllt das RSB-Formular für Liga-Ergebnisse aus')}>{t('Liga-Formular (Excel)')}</button>
       {/if}
     {/if}
     {#if c.active}
-      <button class="primary" onclick={() => (confirmFinish = true)}>Wettkampf beenden</button>
+      <button class="primary" onclick={() => (confirmFinish = true)}>{t('Wettkampf beenden')}</button>
     {:else}
-      <button class="primary" onclick={reactivate}>Wieder aktivieren</button>
+      <button class="primary" onclick={reactivate}>{t('Wieder aktivieren')}</button>
     {/if}
   </div>
 
@@ -114,14 +115,14 @@
     <div class="league">
       <section class="card">
         <div class="actions">
-          <h2>Heim: {res.league.homeClubName} – {res.league.homeTeamName}</h2>
+          <h2>{t('Heim: {club} – {team}', { club: res.league.homeClubName, team: res.league.homeTeamName })}</h2>
           <span class="spacer"></span><strong class="total">{teamTotal(res.home)}</strong>
         </div>
         {@render table(res.home, false)}
       </section>
       <section class="card">
         <div class="actions">
-          <h2>Gast: {res.league.guestClubName} – {res.league.guestTeamName}</h2>
+          <h2>{t('Gast: {club} – {team}', { club: res.league.guestClubName, team: res.league.guestTeamName })}</h2>
           <span class="spacer"></span><strong class="total">{teamTotal(res.guest)}</strong>
         </div>
         {@render table(res.guest, false)}
@@ -133,15 +134,17 @@
 
   <Confirm
     bind:open={confirmFinish}
-    title="Wettkampf beenden?"
-    message={res.entries.length
-      ? 'Der Wettkampf wird ins Archiv verschoben und kann dort wieder aktiviert werden.'
-      : 'Der Wettkampf hat keine Beiträge und wird gelöscht.'}
-    confirmLabel="Beenden"
+    title={t('Wettkampf beenden?')}
+    message={t(
+      res.entries.length
+        ? 'Der Wettkampf wird ins Archiv verschoben und kann dort wieder aktiviert werden.'
+        : 'Der Wettkampf hat keine Beiträge und wird gelöscht.',
+    )}
+    confirmLabel={t('Beenden')}
     onconfirm={finish}
   />
 {:else if !error}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {/if}
 
 <style>

@@ -7,6 +7,7 @@
   import ShooterStep from './entry/ShooterStep.svelte'
   import MachineStep from './entry/MachineStep.svelte'
   import ReadingStep from './entry/ReadingStep.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { id = '', query = {}, quick = false }: { id?: string; query?: Record<string, string>; quick?: boolean } =
     $props()
@@ -66,26 +67,26 @@
 </script>
 
 {#if error}
-  <p class="error">{error}</p>
+  <p class="error">{tx(error)}</p>
 {:else if id && !view}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {:else}
   <div class="actions head">
     <div>
-      <h1>{continueMatch ? 'Ergebnis fortsetzen' : 'Neuer Beitrag'}</h1>
+      <h1>{t(continueMatch ? 'Ergebnis fortsetzen' : 'Neuer Beitrag')}</h1>
       <p class="muted sub">
-        {title} · Scheibe {targetType} · {total} Schuss
-        {#if continued}· {continued.shooter}: {already} von {total} bereits eingelesen{/if}
+        {tx(title)} · {t('Scheibe {type}', { type: targetType })} · {t('{n} Schuss', { n: total })}
+        {#if continued}· {t('{shooter}: {n} von {total} bereits eingelesen', { shooter: continued.shooter, n: already, total })}{/if}
       </p>
     </div>
     <span class="spacer"></span>
-    {#if step !== 'reading'}<a class="button" href={backHref}>Abbrechen</a>{/if}
+    {#if step !== 'reading'}<a class="button" href={backHref}>{t('Abbrechen')}</a>{/if}
   </div>
 
   <ol class="steps">
-    {#if !continueMatch}<li class:current={step === 'shooter'}>Schütze</li>{/if}
-    <li class:current={step === 'machine'}>Gerät</li>
-    <li class:current={step === 'reading'}>Einlesen</li>
+    {#if !continueMatch}<li class:current={step === 'shooter'}>{t('Schütze')}</li>{/if}
+    <li class:current={step === 'machine'}>{t('Gerät')}</li>
+    <li class:current={step === 'reading'}>{t('Einlesen')}</li>
   </ol>
 
   {#if step === 'shooter'}

@@ -1,6 +1,7 @@
 <script lang="ts">
   // Master data: shooters, clubs and teams.
   import { api, type Named, type User } from '../lib/api'
+  import { t, tx } from '../lib/i18n.svelte'
 
   type Tab = 'users' | 'clubs' | 'teams'
   let tab = $state<Tab>('users')
@@ -40,10 +41,10 @@
     }
   }
 
-  const labels: Record<Tab, string> = { users: 'Schützen', clubs: 'Vereine', teams: 'Mannschaften' }
+  const labels = { users: 'Schützen', clubs: 'Vereine', teams: 'Mannschaften' } as const
 </script>
 
-<h1>Stammdaten</h1>
+<h1>{t('Stammdaten')}</h1>
 
 <div class="actions bar">
   <div class="tabs" role="tablist">
@@ -52,26 +53,26 @@
         role="tab"
         aria-selected={tab === key}
         class:current={tab === key}
-        onclick={() => ((tab = key as Tab), (editing = null))}>{label}</button
+        onclick={() => ((tab = key as Tab), (editing = null))}>{t(label)}</button
       >
     {/each}
   </div>
   <span class="spacer"></span>
-  <input type="search" placeholder="Suchen…" bind:value={search} />
-  <button class="primary" onclick={() => (editing = { id: '', name: '', birthday: '' })}>+ Neu</button>
+  <input type="search" placeholder={t('Suchen…')} bind:value={search} />
+  <button class="primary" onclick={() => (editing = { id: '', name: '', birthday: '' })}>{t('+ Neu')}</button>
 </div>
 
-{#if error}<p class="error">{error}</p>{/if}
+{#if error}<p class="error">{tx(error)}</p>{/if}
 
 {#snippet form()}
   <tr class="editing">
     <td colspan="4">
       <form onsubmit={save} class="inline">
         <!-- svelte-ignore a11y_autofocus -->
-        <input bind:value={editing!.name} placeholder="Name" required autofocus />
-        {#if tab === 'users'}<input bind:value={editing!.birthday} placeholder="Geburtsdatum" />{/if}
-        <button type="submit" class="primary">Speichern</button>
-        <button type="button" onclick={() => (editing = null)}>Abbrechen</button>
+        <input bind:value={editing!.name} placeholder={t('Name')} required autofocus />
+        {#if tab === 'users'}<input bind:value={editing!.birthday} placeholder={t('Geburtsdatum')} />{/if}
+        <button type="submit" class="primary">{t('Speichern')}</button>
+        <button type="button" onclick={() => (editing = null)}>{t('Abbrechen')}</button>
       </form>
     </td>
   </tr>
@@ -82,10 +83,10 @@
     <table>
       <thead>
         <tr>
-          <th>Name</th>
+          <th>{t('Name')}</th>
           {#if tab === 'users'}
-            <th>Geburtsdatum</th>
-            <th class="num">Ergebnisse</th>
+            <th>{t('Geburtsdatum')}</th>
+            <th class="num">{t('Ergebnisse')}</th>
           {/if}
           <th></th>
         </tr>
@@ -104,13 +105,13 @@
               {/if}
               <td class="num">
                 <button onclick={() => (editing = { id: r.id, name: r.name, birthday: r.birthday ?? '' })}
-                  >Bearbeiten</button
+                  >{t('Bearbeiten')}</button
                 >
               </td>
             </tr>
           {/if}
         {:else}
-          <tr><td colspan="4" class="muted">Keine Einträge.</td></tr>
+          <tr><td colspan="4" class="muted">{t('Keine Einträge.')}</td></tr>
         {/each}
       </tbody>
     </table>

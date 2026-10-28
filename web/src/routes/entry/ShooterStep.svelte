@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type League, type Named, type User } from '../../lib/api'
   import NamedSelect from '../../lib/NamedSelect.svelte'
+  import { t, tx } from '../../lib/i18n.svelte'
 
   let {
     league,
@@ -65,12 +66,12 @@
 <div class="layout">
   <section class="card users">
     <div class="actions">
-      <h2>Schütze</h2>
+      <h2>{t('Schütze')}</h2>
       <span class="spacer"></span>
-      <button onclick={() => (editing = { name: search, birthday: '' })}>+ Neuer Schütze</button>
+      <button onclick={() => (editing = { name: search, birthday: '' })}>{t('+ Neuer Schütze')}</button>
     </div>
-    <input class="search" type="search" placeholder="Suchen…" bind:value={search} />
-    <ul class="list" role="listbox" aria-label="Schützen">
+    <input class="search" type="search" placeholder={t('Suchen…')} bind:value={search} />
+    <ul class="list" role="listbox" aria-label={t('Schützen')}>
       {#each filtered as u (u.id)}
         <li>
           <button
@@ -85,7 +86,7 @@
           >
         </li>
       {:else}
-        <li class="muted empty">Kein Schütze gefunden.</li>
+        <li class="muted empty">{t('Kein Schütze gefunden.')}</li>
       {/each}
     </ul>
   </section>
@@ -93,48 +94,50 @@
   <section class="card">
     {#if editing}
       <form onsubmit={saveUser}>
-        <h2>{editing.id ? 'Schütze bearbeiten' : 'Neuer Schütze'}</h2>
+        <h2>{t(editing.id ? 'Schütze bearbeiten' : 'Neuer Schütze')}</h2>
         <div class="fields">
           <label class="field">
-            <span>Name</span>
+            <span>{t('Name')}</span>
             <!-- svelte-ignore a11y_autofocus -->
             <input bind:value={editing.name} required autofocus />
           </label>
           <label class="field">
-            <span>Geburtsdatum</span>
-            <input bind:value={editing.birthday} placeholder="TT.MM.JJJJ" />
+            <span>{t('Geburtsdatum')}</span>
+            <input bind:value={editing.birthday} placeholder={t('TT.MM.JJJJ')} />
           </label>
         </div>
-        {#if error}<p class="error">{error}</p>{/if}
+        {#if error}<p class="error">{tx(error)}</p>{/if}
         <div class="actions end">
-          <button type="button" onclick={() => (editing = null)}>Abbrechen</button>
-          <button type="submit" class="primary">Speichern</button>
+          <button type="button" onclick={() => (editing = null)}>{t('Abbrechen')}</button>
+          <button type="submit" class="primary">{t('Speichern')}</button>
         </div>
       </form>
     {:else}
       <div class="actions">
-        <h2>{user?.name ?? 'Schütze auswählen'}</h2>
+        <h2>{user?.name ?? t('Schütze auswählen')}</h2>
         <span class="spacer"></span>
         {#if user}
           <button onclick={() => (editing = { id: user!.id, name: user!.name, birthday: user!.birthday })}
-            >Bearbeiten</button
+            >{t('Bearbeiten')}</button
           >
         {/if}
       </div>
       <div class="fields">
         {#if league}
           <fieldset>
-            <legend>Mannschaft</legend>
+            <legend>{t('Mannschaft')}</legend>
             <label
-              ><input type="radio" bind:group={side} value="home" /> Heim: {league.homeClubName} – {league.homeTeamName}</label
+              ><input type="radio" bind:group={side} value="home" />
+              {t('Heim: {club} – {team}', { club: league.homeClubName, team: league.homeTeamName })}</label
             >
             <label
-              ><input type="radio" bind:group={side} value="guest" /> Gast: {league.guestClubName} – {league.guestTeamName}</label
+              ><input type="radio" bind:group={side} value="guest" />
+              {t('Gast: {club} – {team}', { club: league.guestClubName, team: league.guestTeamName })}</label
             >
           </fieldset>
         {:else}
           <NamedSelect
-            label="Verein"
+            label={t('Verein')}
             items={clubs}
             bind:value={clubId}
             create={async (name) => {
@@ -144,7 +147,7 @@
             }}
           />
           <NamedSelect
-            label="Mannschaft"
+            label={t('Mannschaft')}
             items={teams}
             bind:value={teamId}
             create={async (name) => {
@@ -156,7 +159,7 @@
         {/if}
       </div>
       <div class="actions end">
-        <button class="primary" disabled={!canContinue} onclick={onnext}>Weiter</button>
+        <button class="primary" disabled={!canContinue} onclick={onnext}>{t('Weiter')}</button>
       </div>
     {/if}
   </section>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api, bytesToBase64, type Machine } from '../../lib/api'
+  import { t, tx } from '../../lib/i18n.svelte'
 
   let {
     machineId = $bindable(),
@@ -59,49 +60,51 @@
 
 <section class="card">
   <div class="actions">
-    <h2>Gerät auswählen</h2>
+    <h2>{t('Gerät auswählen')}</h2>
     <span class="spacer"></span>
-    <button onclick={load} disabled={machines === null}>Neu suchen</button>
+    <button onclick={load} disabled={machines === null}>{t('Neu suchen')}</button>
   </div>
 
   {#if machines === null}
-    <p class="muted">Suche angeschlossene Geräte…</p>
+    <p class="muted">{t('Suche angeschlossene Geräte…')}</p>
   {:else}
-    {#if error}<p class="error">{error}</p>{/if}
-    <div class="machines" role="radiogroup" aria-label="Gerät">
+    {#if error}<p class="error">{tx(error)}</p>{/if}
+    <div class="machines" role="radiogroup" aria-label={t('Gerät')}>
       {#each machines as m (m.id)}
         <label class="machine" class:selected={m.id === machineId}>
           <input type="radio" name="machine" checked={m.id === machineId} onchange={() => select(m.id)} />
           <span>
-            <strong>{m.name}</strong>
+            <strong>{tx(m.name)}</strong>
             <small class="muted"
-              >{m.input === 'file' ? `Datei (${m.accept})` : m.input === 'text' ? 'Texteingabe' : 'Auswertemaschine'}</small
+              >{m.input === 'file'
+                ? t('Datei ({accept})', { accept: m.accept })
+                : t(m.input === 'text' ? 'Texteingabe' : 'Auswertemaschine')}</small
             >
           </span>
         </label>
       {/each}
     </div>
     {#if !machines.some((m) => m.input === '')}
-      <p class="muted">Keine Auswertemaschine gefunden. Gerät anschließen und „Neu suchen“ klicken.</p>
+      <p class="muted">{t('Keine Auswertemaschine gefunden. Gerät anschließen und „Neu suchen“ klicken.')}</p>
     {/if}
 
     {#if machine?.input === 'file'}
       <label class="field input">
-        <span>Datei</span>
+        <span>{t('Datei')}</span>
         <input type="file" accept={machine.accept} onchange={pickFile} />
         {#if fileName}<small class="muted">{fileName}</small>{/if}
       </label>
     {:else if machine?.input === 'text'}
       <label class="field input">
-        <span>QR-Code-Inhalt</span>
-        <textarea bind:value={qrText} rows="3" placeholder="z.B. 04092023LGA4132.4+1.25-0.42…"></textarea>
+        <span>{t('QR-Code-Inhalt')}</span>
+        <textarea bind:value={qrText} rows="3" placeholder={t('z.B. 04092023LGA4132.4+1.25-0.42…')}></textarea>
       </label>
     {/if}
   {/if}
 
   <div class="actions end">
-    {#if onback}<button onclick={onback}>Zurück</button>{/if}
-    <button class="primary" disabled={!ready} onclick={onnext}>Einlesen starten</button>
+    {#if onback}<button onclick={onback}>{t('Zurück')}</button>{/if}
+    <button class="primary" disabled={!ready} onclick={onnext}>{t('Einlesen starten')}</button>
   </div>
 </section>
 

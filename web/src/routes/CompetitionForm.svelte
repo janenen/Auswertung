@@ -5,9 +5,11 @@
   import { meta, today } from '../lib/meta.svelte'
   import { navigate } from '../lib/router.svelte'
   import NamedSelect from '../lib/NamedSelect.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { quick = false }: { quick?: boolean } = $props()
 
+  // Default names stay German: they are saved and printed in the (German) PDFs.
   // svelte-ignore state_referenced_locally
   let name = $state(quick ? 'Schnellauswertung' : 'Training')
   let date = $state(today())
@@ -86,76 +88,76 @@
   }
 </script>
 
-<h1>{quick ? 'Schnellauswertung' : 'Neuer Wettkampf'}</h1>
+<h1>{t(quick ? 'Schnellauswertung' : 'Neuer Wettkampf')}</h1>
 {#if quick}
-  <p class="muted">Das Ergebnis wird gespeichert, aber keinem Wettkampf hinzugefügt.</p>
+  <p class="muted">{t('Das Ergebnis wird gespeichert, aber keinem Wettkampf hinzugefügt.')}</p>
 {/if}
 
 <form class="card" onsubmit={submit}>
   <div class="form-grid">
     <label class="field">
-      <span>{quick ? 'Titel' : 'Name'}</span>
-      <input bind:value={name} required title="z.B. Training, Ligawettkampf, Preisschießen" />
+      <span>{t(quick ? 'Titel' : 'Name')}</span>
+      <input bind:value={name} required title={t('z.B. Training, Ligawettkampf, Preisschießen')} />
     </label>
     {#if !quick}
       <label class="field">
-        <span>Datum</span>
-        <input bind:value={date} required pattern={'\\d{2}\\.\\d{2}\\.\\d{4}'} placeholder="TT.MM.JJJJ" />
+        <span>{t('Datum')}</span>
+        <input bind:value={date} required pattern={'\\d{2}\\.\\d{2}\\.\\d{4}'} placeholder={t('TT.MM.JJJJ')} />
       </label>
     {/if}
     <label class="field">
-      <span>Schusszahl</span>
+      <span>{t('Schusszahl')}</span>
       <input type="number" bind:value={count} min="1" max="999" required />
     </label>
     <label class="field">
-      <span>Schuss pro Scheibe</span>
-      <input type="number" bind:value={shotsPerTarget} min="1" max="5" required title="Nur bei Maschinenauswertung" />
+      <span>{t('Schuss pro Scheibe')}</span>
+      <input type="number" bind:value={shotsPerTarget} min="1" max="5" required title={t('Nur bei Maschinenauswertung')} />
     </label>
     <label class="field">
-      <span>Scheibentyp</span>
+      <span>{t('Scheibentyp')}</span>
       <select bind:value={typeOfTarget}>
-        {#each meta.targetTypes as t}<option value={t}>{t}</option>{/each}
+        {#each meta.targetTypes as type}<option value={type}>{type}</option>{/each}
       </select>
     </label>
     <label class="field">
-      <span>Wertung</span>
+      <span>{t('Wertung')}</span>
       <select bind:value={modus}>
-        {#each quick ? meta.modi.slice(0, 2) : meta.modi as m}<option value={m}>{m}</option>{/each}
+        {#each quick ? meta.modi.slice(0, 2) : meta.modi as m}<option value={m}>{tx(m)}</option>{/each}
       </select>
     </label>
   </div>
 
   {#if isLeague}
-    <h2 class="league-title">Liga</h2>
+    <h2 class="league-title">{t('Liga')}</h2>
     <div class="form-grid">
       <label class="field">
-        <span>Disziplin</span>
+        <span>{t('Disziplin')}</span>
         <input bind:value={discipline} />
       </label>
       <label class="field">
-        <span>Liga</span>
+        <span>{t('Liga')}</span>
         <select bind:value={league}>
-          {#each meta.leagues as l}<option value={l}>{l}</option>{/each}
+          {#each meta.leagues as l}<option value={l}>{tx(l)}</option>{/each}
         </select>
       </label>
       <label class="field">
-        <span>Gruppe</span>
+        <span>{t('Gruppe')}</span>
         <input bind:value={group} />
       </label>
     </div>
     <div class="form-grid sides">
-      <NamedSelect label="Heimverein" items={clubs} bind:value={homeClub} create={createClub} />
-      <NamedSelect label="Heimmannschaft" items={teams} bind:value={homeTeam} create={createTeam} />
-      <NamedSelect label="Gastverein" items={clubs} bind:value={guestClub} create={createClub} />
-      <NamedSelect label="Gastmannschaft" items={teams} bind:value={guestTeam} create={createTeam} />
+      <NamedSelect label={t('Heimverein')} items={clubs} bind:value={homeClub} create={createClub} />
+      <NamedSelect label={t('Heimmannschaft')} items={teams} bind:value={homeTeam} create={createTeam} />
+      <NamedSelect label={t('Gastverein')} items={clubs} bind:value={guestClub} create={createClub} />
+      <NamedSelect label={t('Gastmannschaft')} items={teams} bind:value={guestTeam} create={createTeam} />
     </div>
   {/if}
 
-  {#if error}<p class="error">{error}</p>{/if}
+  {#if error}<p class="error">{tx(error)}</p>{/if}
 
   <div class="actions submit">
-    <a class="button" href="#/">Abbrechen</a>
-    <button class="primary" type="submit" disabled={saving}>{quick ? 'Weiter' : 'Wettkampf anlegen'}</button>
+    <a class="button" href="#/">{t('Abbrechen')}</a>
+    <button class="primary" type="submit" disabled={saving}>{t(quick ? 'Weiter' : 'Wettkampf anlegen')}</button>
   </div>
 </form>
 

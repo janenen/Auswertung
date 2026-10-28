@@ -5,6 +5,7 @@
   import { onDestroy } from 'svelte'
   import { api, type BoardCompetition } from '../lib/api'
   import Target from '../lib/Target.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { query = {} }: { query?: Record<string, string> } = $props()
 
@@ -63,36 +64,36 @@
 
 <div class="board">
   <header style="height: {HEADER}px">
-    <h1>{current?.name ?? 'Visualisierung'}</h1>
+    <h1>{current?.name ?? t('Visualisierung')}</h1>
     {#if competitions.length > 1}
-      <div class="pages" aria-label="Wettkämpfe">
+      <div class="pages" aria-label={t('Wettkämpfe')}>
         {#each competitions as c (c.id)}
           <button class:current={c.id === current?.id} onclick={() => (currentId = c.id)} title={c.name}></button>
         {/each}
       </div>
     {/if}
     <span class="spacer"></span>
-    {#if error}<span class="error">{error}</span>{/if}
-    <a href="#/" class="back">Zur Auswertung</a>
+    {#if error}<span class="error">{tx(error)}</span>{/if}
+    <a href="#/" class="back">{t('Zur Auswertung')}</a>
   </header>
 
   {#if !current}
-    <p class="empty">Keine laufenden Wettkämpfe mit Ergebnissen.</p>
+    <p class="empty">{t('Keine laufenden Wettkämpfe mit Ergebnissen.')}</p>
   {:else}
     {@const s = layout.size}
     <div class="grid" style="grid-template-columns: repeat({layout.cols}, {s}px); gap: {GAP}px">
-      {#each current.tiles as t (t.key)}
+      {#each current.tiles as tile (tile.key)}
         <article class="tile" style="width: {s}px">
-          <Target type={t.targetType} shots={t.shots} zoom numbered />
+          <Target type={tile.targetType} shots={tile.shots} zoom numbered />
           <div class="info" style="height: {s * INFO}px; font-size: {s / 16}px">
             <div class="name">
-              {#if t.live}<span class="live" title="Wird gerade eingelesen"></span>{/if}
-              {t.shooter}
+              {#if tile.live}<span class="live" title={t('Wird gerade eingelesen')}></span>{/if}
+              {tile.shooter}
             </div>
-            <div class="result" style="font-size: {s / 7}px">{t.result}</div>
-            <div class="count">{t.shots.length} / {current.count}</div>
+            <div class="result" style="font-size: {s / 7}px">{tile.result}</div>
+            <div class="count">{tile.shots.length} / {current.count}</div>
             <div class="series">
-              {#each t.series as r}<span>{r}</span>{/each}
+              {#each tile.series as r}<span>{r}</span>{/each}
             </div>
           </div>
         </article>

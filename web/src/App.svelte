@@ -3,6 +3,7 @@
   import { api } from './lib/api'
   import { meta } from './lib/meta.svelte'
   import { route, matchPath, href } from './lib/router.svelte'
+  import { i18n, locales, t } from './lib/i18n.svelte'
   import Confirm from './lib/Confirm.svelte'
   import Home from './routes/Home.svelte'
   import CompetitionForm from './routes/CompetitionForm.svelte'
@@ -62,7 +63,7 @@
     { path: '/quick', label: 'Schnellauswertung' },
     { path: '/archive', label: 'Archiv' },
     { path: '/people', label: 'Stammdaten' },
-  ]
+  ] as const
   const section = $derived(
     route.path === '/' || route.path.startsWith('/competitions')
       ? '/'
@@ -76,43 +77,46 @@
   {#if loaded}<Board query={route.query} />{/if}
 {:else if stopped}
   <main class="stopped">
-    <h1>Auswertung beendet</h1>
-    <p class="muted">Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.</p>
+    <h1>{t('Auswertung beendet')}</h1>
+    <p class="muted">{t('Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.')}</p>
   </main>
 {:else}
   <header>
     <a class="brand" href="#/">Auswertung</a>
     <nav>
       {#each nav as item}
-        <a href={href(item.path)} class:current={section === item.path}>{item.label}</a>
+        <a href={href(item.path)} class:current={section === item.path}>{t(item.label)}</a>
       {/each}
     </nav>
     <span class="spacer"></span>
-    <a class="button" href={href('/board')} target="_blank" title="Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm"
-      >Visualisierung</a
+    <select class="language" bind:value={i18n.locale} aria-label={t('Sprache')}>
+      {#each Object.entries(locales) as [code, name]}<option value={code}>{name}</option>{/each}
+    </select>
+    <a class="button" href={href('/board')} target="_blank" title={t('Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm')}
+      >{t('Visualisierung')}</a
     >
-    <button onclick={() => (confirmQuit = true)}>Programm beenden</button>
+    <button onclick={() => (confirmQuit = true)}>{t('Programm beenden')}</button>
   </header>
 
   <main>
     {#if loadError}
-      <p class="error">Server nicht erreichbar: {loadError}</p>
+      <p class="error">{t('Server nicht erreichbar: {error}', { error: loadError })}</p>
     {:else if !loaded}
-      <p class="muted">Lade…</p>
+      <p class="muted">{t('Lade…')}</p>
     {:else if current}
       {#key route.path + JSON.stringify(route.query)}
         <current.component {...current.params} query={route.query} quick={current.pattern === '/quick' || current.pattern === '/entry'} />
       {/key}
     {:else}
-      <p>Seite nicht gefunden. <a href="#/">Zur Übersicht</a></p>
+      <p>{t('Seite nicht gefunden.')} <a href="#/">{t('Zur Übersicht')}</a></p>
     {/if}
   </main>
 
   <Confirm
     bind:open={confirmQuit}
-    title="Wirklich beenden?"
-    message="Der lokale Server wird gestoppt. Laufende Einlesevorgänge werden abgebrochen."
-    confirmLabel="Beenden"
+    title={t('Wirklich beenden?')}
+    message={t('Der lokale Server wird gestoppt. Laufende Einlesevorgänge werden abgebrochen.')}
+    confirmLabel={t('Beenden')}
     danger
     onconfirm={quit}
   />

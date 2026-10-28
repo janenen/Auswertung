@@ -2,6 +2,7 @@
   import { onDestroy } from 'svelte'
   import { api, type ReadingEvent, type Shot } from '../../lib/api'
   import Target from '../../lib/Target.svelte'
+  import { t, tx } from '../../lib/i18n.svelte'
 
   let {
     request,
@@ -27,6 +28,7 @@
   let source: EventSource | undefined
 
   async function start() {
+    // Messages stay German and are translated when shown, like the server's.
     log.push({ type: 'status', message: 'Einstellungen werden übergeben…' })
     try {
       const { id } = await api.startReading(request)
@@ -75,35 +77,35 @@
   <section class="card side">
     <div class="progress">
       <span class="big">{already + shots.length}</span>
-      <span class="muted">/ {total} Schuss</span>
+      <span class="muted">{t('/ {total} Schuss', { total })}</span>
     </div>
     <progress max={total} value={already + shots.length}></progress>
     {#if last}
       <p class="last">
-        Letzter Schuss: <strong>{last.ringe.toFixed(1)}</strong>
-        <span class="muted">Teiler {last.teiler.toFixed(1)}</span>
+        {t('Letzter Schuss:')} <strong>{last.ringe.toFixed(1)}</strong>
+        <span class="muted">{t('Teiler')} {last.teiler.toFixed(1)}</span>
       </p>
     {/if}
 
     <ul class="log">
       {#each log as l}
-        <li class:error={l.type === 'error'}>{l.message}</li>
+        <li class:error={l.type === 'error'}>{tx(l.message)}</li>
       {/each}
     </ul>
 
     <div class="shots">
       {#each shots as s, i}
-        <span title="Teiler {s.teiler.toFixed(1)}"><small class="muted">{already + i + 1}</small> {s.ringe.toFixed(1)}</span>
+        <span title="{t('Teiler')} {s.teiler.toFixed(1)}"><small class="muted">{already + i + 1}</small> {s.ringe.toFixed(1)}</span>
       {/each}
     </div>
 
     <div class="actions end">
       {#if done}
-        <button onclick={onback}>Zurück</button>
+        <button onclick={onback}>{t('Zurück')}</button>
       {:else}
-        <button class="danger" disabled={!sessionId || stopping} onclick={() => stop(false)}>Abbrechen</button>
+        <button class="danger" disabled={!sessionId || stopping} onclick={() => stop(false)}>{t('Abbrechen')}</button>
         <button class="primary" disabled={!sessionId || stopping} onclick={() => stop(true)}
-          >Stopp &amp; speichern</button
+          >{t('Stopp & speichern')}</button
         >
       {/if}
     </div>

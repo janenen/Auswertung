@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type CompetitionSummary } from '../lib/api'
   import { href, navigate } from '../lib/router.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let competitions = $state<CompetitionSummary[] | null>(null)
   let error = $state('')
@@ -26,25 +27,25 @@
 </script>
 
 <div class="actions head">
-  <h1>Archiv</h1>
+  <h1>{t('Archiv')}</h1>
   <span class="spacer"></span>
-  <input type="search" placeholder="Suchen…" bind:value={search} />
+  <input type="search" placeholder={t('Suchen…')} bind:value={search} />
 </div>
 
-{#if error}<p class="error">{error}</p>{/if}
+{#if error}<p class="error">{tx(error)}</p>{/if}
 {#if competitions === null}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {:else}
   <section class="card">
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>Wettkampf</th>
-            <th>Datum</th>
-            <th>Scheibe</th>
-            <th>Wertung</th>
-            <th class="num">Beiträge</th>
+            <th>{t('Wettkampf')}</th>
+            <th>{t('Datum')}</th>
+            <th>{t('Scheibe')}</th>
+            <th>{t('Wertung')}</th>
+            <th class="num">{t('Beiträge')}</th>
             <th></th>
           </tr>
         </thead>
@@ -54,12 +55,12 @@
               <td><a href={href(`/competitions/${c.id}/results`)}>{c.name}</a></td>
               <td>{c.date}</td>
               <td>{c.type_of_target}</td>
-              <td class="muted">{c.modus}</td>
+              <td class="muted">{tx(c.modus)}</td>
               <td class="num">{c.entryCount}</td>
-              <td class="num"><button onclick={() => activate(c.id)}>Laden</button></td>
+              <td class="num"><button onclick={() => activate(c.id)}>{t('Laden')}</button></td>
             </tr>
           {:else}
-            <tr><td colspan="6" class="muted">Keine beendeten Wettkämpfe.</td></tr>
+            <tr><td colspan="6" class="muted">{t('Keine beendeten Wettkämpfe.')}</td></tr>
           {/each}
         </tbody>
       </table>

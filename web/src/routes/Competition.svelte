@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api, type CompetitionView } from '../lib/api'
   import { href, navigate } from '../lib/router.svelte'
+  import { t, tx } from '../lib/i18n.svelte'
 
   let { id }: { id: string } = $props()
 
@@ -18,63 +19,65 @@
 </script>
 
 {#if error}
-  <p class="error">{error}</p>
+  <p class="error">{tx(error)}</p>
 {:else if view && c}
   <div class="actions head">
     <div>
       <h1>{c.name}</h1>
       <p class="muted sub">
-        {c.date} · Scheibe {c.type_of_target} · {c.count} Schuss · {c.shots_per_target} pro Scheibe · {c.modus}
-        {#if !c.active}<span class="badge">beendet</span>{/if}
+        {c.date} · {t('Scheibe {type}', { type: c.type_of_target })} · {t('{n} Schuss', { n: c.count })} ·
+        {t('{n} pro Scheibe', { n: c.shots_per_target })} · {tx(c.modus)}
+        {#if !c.active}<span class="badge">{t('beendet')}</span>{/if}
       </p>
       {#if view.league}
         <p class="muted sub">
-          {view.league.league}
-          {view.league.group} · {view.league.discipline} · Heim: {view.league.homeClubName} – {view.league.homeTeamName} ·
-          Gast: {view.league.guestClubName} – {view.league.guestTeamName}
+          {tx(view.league.league)}
+          {view.league.group} · {view.league.discipline} ·
+          {t('Heim: {club} – {team}', { club: view.league.homeClubName, team: view.league.homeTeamName })} ·
+          {t('Gast: {club} – {team}', { club: view.league.guestClubName, team: view.league.guestTeamName })}
         </p>
       {/if}
     </div>
     <span class="spacer"></span>
-    <a class="button" href={href(`/competitions/${id}/results`)}>Wettkampfergebnisse</a>
+    <a class="button" href={href(`/competitions/${id}/results`)}>{t('Wettkampfergebnisse')}</a>
     {#if c.active}
-      <a class="button primary" href={href(`/competitions/${id}/entry`)}>+ Beitrag hinzufügen</a>
+      <a class="button primary" href={href(`/competitions/${id}/entry`)}>{t('+ Beitrag hinzufügen')}</a>
     {/if}
   </div>
 
   {#if incomplete.length && c.active}
     <div class="notice">
-      <strong>Unvollständige Ergebnisse:</strong>
+      <strong>{t('Unvollständige Ergebnisse:')}</strong>
       {#each incomplete as e (e.matchId)}
         <span class="incomplete">
           {e.shooter} ({e.shots}/{c.count})
-          <button onclick={() => navigate(`/competitions/${id}/entry`, { match: e.matchId })}>Fortsetzen</button>
+          <button onclick={() => navigate(`/competitions/${id}/entry`, { match: e.matchId })}>{t('Fortsetzen')}</button>
         </span>
       {/each}
     </div>
   {/if}
 
   <section class="card">
-    <h2>Teilnehmer ({view.entries.length})</h2>
+    <h2>{t('Teilnehmer ({n})', { n: view.entries.length })}</h2>
     {#if view.entries.length === 0}
-      <p class="muted">Noch keine Beiträge.</p>
+      <p class="muted">{t('Noch keine Beiträge.')}</p>
     {:else}
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>Schütze</th>
-              <th>Verein</th>
-              <th>Mannschaft</th>
-              <th class="num">Schüsse</th>
-              <th>Serien</th>
-              <th class="num">Wertung</th>
+              <th>{t('Schütze')}</th>
+              <th>{t('Verein')}</th>
+              <th>{t('Mannschaft')}</th>
+              <th class="num">{t('Schüsse')}</th>
+              <th>{t('Serien')}</th>
+              <th class="num">{t('Wertung')}</th>
             </tr>
           </thead>
           <tbody>
             {#each view.entries as e (e.matchId)}
               <tr class="clickable" onclick={() => navigate(`/matches/${e.matchId}`, { competition: id })}>
-                <td>{e.shooter} {#if e.active}<span class="badge active">unvollständig</span>{/if}</td>
+                <td>{e.shooter} {#if e.active}<span class="badge active">{t('unvollständig')}</span>{/if}</td>
                 <td>{e.club}</td>
                 <td>{e.team}</td>
                 <td class="num">{e.shots}/{c.count}</td>
@@ -88,7 +91,7 @@
     {/if}
   </section>
 {:else}
-  <p class="muted">Lade…</p>
+  <p class="muted">{t('Lade…')}</p>
 {/if}
 
 <style>

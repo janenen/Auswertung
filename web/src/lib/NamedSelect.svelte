@@ -1,6 +1,7 @@
 <script lang="ts">
   // Select for clubs or teams with inline creation of a new entry.
   import type { Named } from './api'
+  import { t, tx } from './i18n.svelte'
 
   let {
     items,
@@ -42,7 +43,7 @@
       <!-- svelte-ignore a11y_autofocus -->
       <input
         bind:value={name}
-        placeholder="Neuer Name"
+        placeholder={t('Neuer Name')}
         autofocus
         onkeydown={(e) => {
           if (e.key === 'Enter') {
@@ -52,10 +53,10 @@
           if (e.key === 'Escape') adding = false
         }}
       />
-      <button type="button" class="primary" onclick={add}>Anlegen</button>
+      <button type="button" class="primary" onclick={add}>{t('Anlegen')}</button>
       <button type="button" onclick={() => (adding = false)}>×</button>
     </span>
-    {#if error}<small class="error">{error}</small>{/if}
+    {#if error}<small class="error">{tx(error)}</small>{/if}
   {:else}
     <span class="row">
       <select bind:value {disabled}>
@@ -64,7 +65,7 @@
           <option value={item.id}>{item.name}</option>
         {/each}
       </select>
-      <button type="button" {disabled} onclick={() => (adding = true)} title="{label} anlegen">+ Neu</button>
+      <button type="button" {disabled} onclick={() => (adding = true)} title={t('{label} anlegen', { label })}>{t('+ Neu')}</button>
     </span>
   {/if}
 </label>

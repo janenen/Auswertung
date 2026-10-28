@@ -1,10 +1,12 @@
 <script lang="ts">
   // In-page confirmation dialog.
+  import { t } from './i18n.svelte'
+
   let {
     open = $bindable(false),
     title,
     message = '',
-    confirmLabel = 'OK',
+    confirmLabel = t('OK'),
     danger = false,
     onconfirm,
   }: {
@@ -29,7 +31,7 @@
   <h3>{title}</h3>
   {#if message}<p>{message}</p>{/if}
   <div class="actions">
-    <button onclick={() => (open = false)}>Abbrechen</button>
+    <button onclick={() => (open = false)}>{t('Abbrechen')}</button>
     <button
       class={danger ? 'danger' : 'primary'}
       onclick={() => {

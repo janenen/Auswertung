@@ -10,7 +10,9 @@ Auswertung is a local web app: a single executable starts a server on
 (JSON, compatible with the former Python version) and reports are written to
 `./output`.
 
-A simulator for a RIKA machine is found in https://github.com/janenen/simulator.
+To test without hardware, start with `-simulator`: a "Rika-Simulator" is then
+offered next to the real machines and produces random shots on the
+competition's target type (built-in port of https://github.com/janenen/simulator).
 
 ## Usage
 
@@ -18,7 +20,7 @@ Download `auswertung.exe` from the releases and start it in the folder that
 should contain `db` and `output`. Options:
 
 ```
-auswertung -addr 127.0.0.1:8080 -data db -out output -no-browser \
+auswertung -addr 127.0.0.1:8080 -data db -out output -no-browser -simulator \
            -league-template extern/formular_ligaergebnisse_kr_bez_ll.xlsx
 ```
 

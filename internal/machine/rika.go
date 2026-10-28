@@ -8,6 +8,7 @@ import (
 	"log"
 	"regexp"
 	"strconv"
+	"sync"
 	"time"
 
 	"go.bug.st/serial"
@@ -28,10 +29,11 @@ const (
 )
 
 const (
-	rikaPrefix     = "rika:"
-	rikaTimeout    = 500 * time.Millisecond
-	rikaPoll       = 200 * time.Millisecond
-	rikaMessageLen = 32 + 24 + 2
+	rikaPrefix       = "rika:"
+	rikaTimeout      = 500 * time.Millisecond
+	rikaPoll         = 200 * time.Millisecond
+	rikaProbeTimeout = 3 * time.Second
+	rikaMessageLen   = 32 + 24 + 2
 )
 
 var rikaMessage = regexp.MustCompile(`^(\d{8})\r(\d{3})\r(\d{8})\r(\w{2})\r(\d{2})\r(\d{3})\r(\d{3})\r(\d{5})\r([+-]\d{5})\r([+-]\d{5})\r`)
@@ -39,8 +41,13 @@ var rikaMessage = regexp.MustCompile(`^(\d{8})\r(\d{3})\r(\d{8})\r(\w{2})\r(\d{2
 // Rika is a RIKA SAG-2 scoring machine on a serial port.
 type Rika struct{ Port string }
 
-func (r Rika) ID() string     { return rikaPrefix + r.Port }
-func (r Rika) Name() string   { return "Rika SAG-2 an " + r.Port }
+func (r Rika) ID() string { return rikaPrefix + r.Port }
+func (r Rika) Name() string {
+	if r.simulated() {
+		return "Rika-Simulator"
+	}
+	return "Rika SAG-2 an " + r.Port
+}
 func (r Rika) Input() string  { return InputNone }
 func (r Rika) Accept() string { return "" }
 
@@ -55,6 +62,17 @@ var openPort = func(name string) (io.ReadWriteCloser, error) {
 		return nil, err
 	}
 	return p, nil
+}
+
+func (r Rika) simulated() bool { return simulatorEnabled && r.Port == SimulatorPort }
+
+// open opens the serial port, or the simulator producing shots on the
+// expected target type.
+func (r Rika) open(targetType string) (io.ReadWriteCloser, error) {
+	if r.simulated() {
+		return newSimulator(targetType), nil
+	}
+	return openPort(r.Port)
 }
 
 type rikaConn struct{ rw io.ReadWriter }
@@ -137,7 +155,7 @@ func parseRikaMessage(msg []byte) (Reading, error) {
 }
 
 func (r Rika) Read(ctx context.Context, req Request, out chan<- Reading) error {
-	p, err := openPort(r.Port)
+	p, err := r.open(req.TargetType)
 	if err != nil {
 		return fmt.Errorf("Port %s konnte nicht geöffnet werden: %w", r.Port, err)
 	}
@@ -205,11 +223,24 @@ func discoverRika() []Rika {
 	ports, err := serial.GetPortsList()
 	if err != nil {
 		log.Printf("listing serial ports: %v", err)
-		return nil
 	}
 	var found []Rika
-	for _, name := range ports {
-		if err := probe(name); err != nil {
+	if simulatorEnabled {
+		found = append(found, Rika{Port: SimulatorPort})
+	}
+	// Probe in parallel: some ports (e.g. Bluetooth) block on open.
+	errs := make([]error, len(ports))
+	var wg sync.WaitGroup
+	for i, name := range ports {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			errs[i] = probeTimeout(name)
+		}()
+	}
+	wg.Wait()
+	for i, name := range ports {
+		if err := errs[i]; err != nil {
 			if !errors.Is(err, io.EOF) {
 				log.Printf("no RIKA on %s: %v", name, err)
 			}
@@ -218,4 +249,16 @@ func discoverRika() []Rika {
 		found = append(found, Rika{Port: name})
 	}
 	return found
+}
+
+// probeTimeout is probe with a time limit; a blocked probe is abandoned.
+func probeTimeout(name string) error {
+	done := make(chan error, 1)
+	go func() { done <- probe(name) }()
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(rikaProbeTimeout):
+		return errors.New("Zeitüberschreitung")
+	}
 }

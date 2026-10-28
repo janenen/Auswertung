@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math"
 	"sync"
 	"testing"
 	"time"
@@ -105,6 +106,39 @@ func TestRikaCancel(t *testing.T) {
 	defer cancel()
 	if err := (Rika{Port: "COM9"}).Read(ctx, Request{Count: 5, ShotsPerTarget: 1}, make(chan Reading)); err != context.DeadlineExceeded {
 		t.Errorf("err = %v", err)
+	}
+}
+
+func TestSimulator(t *testing.T) {
+	SetSimulator(true)
+	simulatorDelay = 0
+	defer func() { SetSimulator(false); simulatorDelay = 3 }()
+
+	readings, err := collect(t, Rika{Port: SimulatorPort}, Request{Count: 25, ShotsPerTarget: 1, TargetType: "LP"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(readings) != 25 {
+		t.Fatalf("got %d readings", len(readings))
+	}
+	g := model.Targets["LP"]
+	for i, r := range readings {
+		s := r.Shot
+		if r.TargetType != "LP" || s.Ringe < 0 || s.Ringe > 10.9 || s.Teiler > g.Width()/2 {
+			t.Errorf("reading %d = %+v", i, r)
+		}
+		if d := math.Hypot(s.X, s.Y) * 100; math.Abs(d-s.Teiler) > 2 {
+			t.Errorf("reading %d: distance %.1f != Teiler %.1f", i, d, s.Teiler)
+		}
+	}
+}
+
+func TestSimRing(t *testing.T) {
+	g := model.Targets["LG"]
+	for _, c := range []struct{ t, want float64 }{{0, 10.9}, {249, 10}, {250, 9.9}, {499, 9}, {2499, 1}, {2500, 0}} {
+		if got := simRing(g, c.t); math.Abs(got-c.want) > 1e-9 {
+			t.Errorf("simRing(%v) = %v, want %v", c.t, got, c.want)
+		}
 	}
 }
 

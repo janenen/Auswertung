@@ -20,12 +20,23 @@ three random results each for the home and the guest team.
 
 ## Usage
 
-Download `auswertung.exe` from the releases and start it in the folder that
-should contain `db`. Options:
+Download the archive for your system from the
+[releases](https://github.com/janenen/Auswertung/releases) (Windows, Linux and
+macOS, each for amd64/x64 and arm64), unpack it and start `auswertung`
+(`auswertung.exe` on Windows) in the folder that should contain `db`.
+`SHA256SUMS` lists the checksums of the archives.
+
+On macOS the binary is not signed: the first time, open it via right-click →
+"Open", or run `xattr -d com.apple.quarantine auswertung`. Serial ports of
+scoring machines appear as `/dev/cu.*` (macOS) or `/dev/ttyUSB*` (Linux; the
+user needs access to them, e.g. membership in the `dialout` group).
+
+Options:
 
 ```
 auswertung -addr 127.0.0.1:8080 -data db -no-browser -simulator \
            -league-template extern/formular_ligaergebnisse_kr_bez_ll.xlsx
+auswertung -version
 ```
 
 The Excel export of league results fills the RSB form, which is not part of
@@ -46,3 +57,8 @@ go test ./...                                     # backend tests
 
 For frontend work, run `go run ./cmd/auswertung -no-browser` and
 `npm run dev` in `web/` (Vite proxies `/api` to the Go server).
+
+Releases: pushing a version tag (e.g. `git tag 2.1.0 && git push origin 2.1.0`)
+builds all platforms and publishes a GitHub release. Locally,
+`scripts/build-release.sh <version>` builds the same archives into `dist/`
+(after building the frontend).

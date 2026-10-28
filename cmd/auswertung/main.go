@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
@@ -22,13 +23,21 @@ import (
 	"github.com/janenen/auswertung/web"
 )
 
+// version is set by the release build (-ldflags "-X main.version=...").
+var version = "dev"
+
 func main() {
 	addr := flag.String("addr", "127.0.0.1:8080", "listen address")
 	dataDir := flag.String("data", "db", "database directory")
 	leagueTemplate := flag.String("league-template", filepath.Join("extern", "formular_ligaergebnisse_kr_bez_ll.xlsx"), "RSB league result form (.xlsx)")
 	noBrowser := flag.Bool("no-browser", false, "do not open the browser")
 	simulator := flag.Bool("simulator", false, "offer a simulated RIKA SAG-2 for testing without hardware")
+	showVersion := flag.Bool("version", false, "print the version and exit")
 	flag.Parse()
+	if *showVersion {
+		fmt.Println("Auswertung", version)
+		return
+	}
 	machine.SetSimulator(*simulator)
 
 	url := "http://" + *addr
@@ -61,7 +70,7 @@ func main() {
 		srv.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("Auswertung läuft auf %s (Daten: %s)", url, *dataDir)
+	log.Printf("Auswertung %s läuft auf %s (Daten: %s)", version, url, *dataDir)
 	if !*noBrowser {
 		openBrowser(url)
 	}

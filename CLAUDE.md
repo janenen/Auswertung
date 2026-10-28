@@ -20,7 +20,7 @@ go test ./internal/store -run TestLegacyImport   # single test
 gofmt -l . && go vet ./...               # CI also checks these
 ```
 
-CI (`.github/workflows/ci.yml`) runs frontend check/build, gofmt, vet and tests. Pushing a `*.*.*` tag builds `auswertung.exe` and publishes a GitHub release.
+CI (`.github/workflows/ci.yml`) runs frontend check/build, gofmt, vet and tests. Pushing a `*.*.*` tag runs `.github/workflows/release.yml`: checks and tests, then `scripts/build-release.sh <tag>` cross-compiles (CGO off) for windows/linux/darwin × amd64/arm64 into `dist/` (zip for Windows, tar.gz elsewhere, plus `SHA256SUMS`, version via `-X main.version`) and publishes a GitHub release.
 
 ## Architecture
 

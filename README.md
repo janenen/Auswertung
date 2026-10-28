@@ -6,8 +6,9 @@ manages competitions, shooters, clubs, teams and RSB league matches, and
 creates PDF reports.
 
 Auswertung is a local web app: a single executable starts a server on
-`http://127.0.0.1:8080` and opens the browser. Data is stored in `./db`
-(JSON, compatible with the former Python version) and reports are written to
+`http://127.0.0.1:8080` and opens the browser. Data is stored in the SQLite
+database `./db/auswertung.db` (data of the former Python version in `./db/*.json`
+is imported on first start and then moved to `./db/legacy`) and reports are written to
 `./output`.
 
 To test without hardware, start with `-simulator`: a "Rika-Simulator" is then

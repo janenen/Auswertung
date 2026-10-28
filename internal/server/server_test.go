@@ -22,12 +22,20 @@ import (
 	"github.com/janenen/auswertung/internal/store"
 )
 
-func newTestServer(t *testing.T) *httptest.Server {
+// openStore opens a store in a temporary directory, closed after the test.
+func openStore(t *testing.T) *store.Store {
 	t.Helper()
 	st, err := store.Open(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { st.Close() })
+	return st
+}
+
+func newTestServer(t *testing.T) *httptest.Server {
+	t.Helper()
+	st := openStore(t)
 	frontend := fstest.MapFS{"index.html": {Data: []byte("<html>app</html>")}}
 	ts := httptest.NewServer(New(st, frontend, Options{OutDir: t.TempDir(), LeagueTemplate: filepath.Join("..", "..", "extern", "formular_ligaergebnisse_kr_bez_ll.xlsx")}))
 	t.Cleanup(ts.Close)
@@ -144,6 +152,7 @@ func TestReadingFlow(t *testing.T) {
 		"/api/matches/" + matchID + "/report.pdf",
 		"/api/matches/" + matchID + "/report.pdf?title=Test&decimal=true",
 		"/api/matches/" + matchID + "/export.csv",
+		"/api/matches/" + matchID + "/qr.png",
 		"/api/competitions/" + comp.ID + "/report.pdf",
 	} {
 		if code := call(t, ts, "GET", path, nil, nil); code != 200 {
@@ -200,16 +209,20 @@ func (endlessMachine) Read(ctx context.Context, _ machine.Request, out chan<- ma
 }
 
 func TestBoard(t *testing.T) {
-	st, err := store.Open(t.TempDir())
+	st := openStore(t)
+	srv := &Server{store: st, readings: reading.NewManager()}
+	u, _ := st.SaveUser(model.User{Name: "Anna"})
+	c, err := st.CreateCompetition(model.Competition{Name: "Pokal", Date: "01.03.2026", Count: 40, TypeOfTarget: "LG", Modus: model.ModusBestDecimal, Decimal: true}, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	srv := &Server{store: st, readings: reading.NewManager()}
-	u, _ := st.SaveUser(model.User{Name: "Anna"})
-	c, _ := st.CreateCompetition(model.Competition{Name: "Pokal", Count: 40, TypeOfTarget: "LG", Modus: model.ModusBestDecimal, Decimal: true}, nil)
-	st.CreateCompetition(model.Competition{Name: "Leer", Count: 40, TypeOfTarget: "LG", Modus: model.ModusBest}, nil)
-	st.RecordNewMatch(store.NewMatch{Shooter: u.ID, Competition: c.ID, TypeOfTarget: "LG", Count: 40,
-		Shots: model.Shots{{Ringe: 9.5}, {Ringe: 10.1}}})
+	if _, err := st.CreateCompetition(model.Competition{Name: "Leer", Date: "01.03.2026", Count: 40, TypeOfTarget: "LG", Modus: model.ModusBest}, nil); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := st.RecordNewMatch(store.NewMatch{Shooter: u.ID, Competition: c.ID, TypeOfTarget: "LG", Count: 40,
+		Shots: model.Shots{{Ringe: 9.5}, {Ringe: 10.1}}}); err != nil {
+		t.Fatal(err)
+	}
 
 	sess, err := srv.readings.Start(reading.Params{Machine: endlessMachine{}, Tag: reading.Tag{CompetitionID: c.ID, ShooterID: u.ID}})
 	if err != nil {

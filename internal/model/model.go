@@ -1,6 +1,5 @@
-// Package model contains the domain types of Auswertung. The JSON field names
-// match the files written by the former Python implementation so existing
-// databases in ./db keep working.
+// Package model contains the domain types of Auswertung. Their JSON field
+// names are the API of the web frontend (web/src/lib/api.ts).
 package model
 
 import (
@@ -86,43 +85,26 @@ func (s Shots) Series() []Shots {
 	return series
 }
 
+// Match is the result of one shooter. Club, Team and Competition are empty
+// when not set; a match without competition is a quick analysis.
 type Match struct {
-	Shooter      string   `json:"shooter"`
-	TypeOfTarget string   `json:"type_of_target"`
-	Date         string   `json:"date"`
-	Shots        Shots    `json:"shots"`
-	ID           string   `json:"id"`
-	Active       bool     `json:"active"`
-	Club         string   `json:"club"`
-	Team         string   `json:"team"`
-	Competitions []string `json:"competitions"`
-}
-
-func (m *Match) AddCompetition(id string) {
-	if !slices.Contains(m.Competitions, id) {
-		m.Competitions = append(m.Competitions, id)
-	}
+	ID           string `json:"id"`
+	Shooter      string `json:"shooter"`
+	Club         string `json:"club"`
+	Team         string `json:"team"`
+	Competition  string `json:"competition"`
+	TypeOfTarget string `json:"type_of_target"`
+	// Date is formatted as DD.MM.YYYY.
+	Date string `json:"date"`
+	// Active marks an incomplete match that can be continued.
+	Active bool  `json:"active"`
+	Shots  Shots `json:"shots"`
 }
 
 type User struct {
-	Name         string   `json:"name"`
-	Birthday     string   `json:"birthday"`
-	Niceness     int      `json:"niceness"`
-	ID           string   `json:"id"`
-	Matches      []string `json:"matches"`
-	Competitions []string `json:"competitions"`
-}
-
-func (u *User) AddMatch(id string) {
-	if !slices.Contains(u.Matches, id) {
-		u.Matches = append(u.Matches, id)
-	}
-}
-
-func (u *User) AddCompetition(id string) {
-	if !slices.Contains(u.Competitions, id) {
-		u.Competitions = append(u.Competitions, id)
-	}
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Birthday string `json:"birthday"`
 }
 
 type Club struct {
@@ -136,23 +118,18 @@ type Team struct {
 }
 
 type Competition struct {
-	Name           string   `json:"name"`
-	Date           string   `json:"date"`
-	Count          int      `json:"count"`
-	ShotsPerTarget int      `json:"shots_per_target"`
-	TypeOfTarget   string   `json:"type_of_target"`
-	Decimal        bool     `json:"decimal"`
-	Active         bool     `json:"active"`
-	Modus          string   `json:"modus"`
-	Entries        []string `json:"entries"`
-	ID             string   `json:"id"`
-	League         string   `json:"league"`
-}
-
-func (c *Competition) AddMatch(id string) {
-	if !slices.Contains(c.Entries, id) {
-		c.Entries = append(c.Entries, id)
-	}
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Date is formatted as DD.MM.YYYY.
+	Date           string `json:"date"`
+	Count          int    `json:"count"`
+	ShotsPerTarget int    `json:"shots_per_target"`
+	TypeOfTarget   string `json:"type_of_target"`
+	Decimal        bool   `json:"decimal"`
+	Active         bool   `json:"active"`
+	Modus          string `json:"modus"`
+	// League is the ID of the league pairing, empty for other competitions.
+	League string `json:"league"`
 }
 
 // RSBLeague describes a league match between a home and a guest team.

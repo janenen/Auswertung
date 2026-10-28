@@ -124,7 +124,7 @@ func fail(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, err)
 	case errors.Is(err, store.ErrHasEntries):
 		writeError(w, http.StatusConflict, err)
-	case errors.As(err, &br):
+	case errors.As(err, &br), errors.Is(err, store.ErrInvalid):
 		writeError(w, http.StatusBadRequest, err)
 	default:
 		log.Printf("error: %v", err)

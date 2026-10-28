@@ -71,8 +71,8 @@ func (s *Server) matchInfo(r *http.Request) (report.MatchInfo, error) {
 	info.Shooter, info.Club, info.Team = s.names(m)
 	q := r.URL.Query()
 	compID := q.Get("competition")
-	if compID == "" && q.Get("title") == "" && len(m.Competitions) > 0 {
-		compID = m.Competitions[0]
+	if compID == "" && q.Get("title") == "" {
+		compID = m.Competition
 	}
 	if compID != "" {
 		c, err := s.store.Competition(compID)

@@ -16,7 +16,7 @@ npm run check                            # (in web/) svelte-check type checking
 npm run dev                              # (in web/) Vite dev server, proxies /api to 127.0.0.1:8080
 go run ./cmd/auswertung -no-browser      # run backend (flags: -addr, -data db, -out output, -simulator)
 go test ./...                            # all backend tests
-go test ./internal/store -run TestMigrateV0   # single test
+go test ./internal/store -run TestLegacyImport   # single test
 gofmt -l . && go vet ./...               # CI also checks these
 ```
 
@@ -25,7 +25,7 @@ CI (`.github/workflows/ci.yml`) runs frontend check/build, gofmt, vet and tests.
 ## Architecture
 
 - **`internal/model`**: domain types and statistics. `Shots` carries the derived values (`Summe`, `SummeGanz`, `Best`, `AblageRL/HT`, `Series` = chunks of 10). Target geometry (`Targets`, in 1/100 mm; shot x/y are in mm) and scoring modes (`Modi`, `RankValue`, `SortMatches`; best Teiler = *lowest*) live here.
-- **`internal/store`**: in-memory store with write-through to `db/*.json`. **The JSON layout must stay compatible with the Python version** (snake_case fields, files shaped `{"<key>": {id: item}, "version": n}`). Entities reference each other by UUID. `migrate.go` upgrades legacy layouts on raw JSON before loading (matches v0→v2, users v0→v1, `schuetzen.ini` import). Store methods return copies; mutate only through store methods.
+- **`internal/store`**: SQLite database `db/auswertung.db` via the pure-Go driver `modernc.org/sqlite` (no CGO, keeps the single-exe build). Normalized schema in `schema.go` with foreign keys, UUID text IDs, ISO dates (the model uses DD.MM.YYYY; the store converts), and `matches.seq` as recording/entry order; schema changes are appended to `migrations` (tracked by `PRAGMA user_version`). Every write is one transaction. `legacy.go` imports the Python version's JSON files (`db/*.json`, `../schuetzen.ini`, upgrading their old layouts in memory) once when the database is created, in the same transaction, and then moves them to `db/legacy/`; the legacy format is read-only and must not be written.
 - **`internal/machine`**: `Machine` interface (`Read(ctx, Request, chan<- Reading)`). `Rika` speaks the SAG-2 serial protocol via `go.bug.st/serial` (`openPort` is swapped for a fake in tests). `CSV`, `QR`, `QSD` parse uploaded data. `simulator.go` emulates a SAG-2 as an in-memory port behind `Rika{Port: "SIM"}` (only with `SetSimulator(true)`), producing random shots on the requested target type. `Discover()` probes serial ports in parallel with a timeout; `ByID()` resolves without probing (`rika:COM3`, `csv`, `qr`, `qsd`).
 - **`internal/reading`**: runs one reading per machine in a goroutine, buffers events (`status`/`shot`/`error`/`done`) and persists via a `FinishFunc` callback. Wrong target type aborts without saving; Stop(keep) saves partial results, Stop(discard) does not; on a machine error already-read shots are saved.
 - **`internal/report`**: PDFs via `go-pdf/fpdf` with vector-drawn targets/arrows (`draw.go`), CSV and QR string formats that round-trip with the `machine` parsers. `Save` writes copies under `output/` with `_n` de-duplication.

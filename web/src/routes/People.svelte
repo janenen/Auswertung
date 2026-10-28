@@ -1,11 +1,11 @@
 <script lang="ts">
   // Master data: shooters, clubs and teams.
-  import { api, type Named, type User } from '../lib/api'
+  import { api, type Named, type UserSummary } from '../lib/api'
   import { t, tx } from '../lib/i18n.svelte'
 
   type Tab = 'users' | 'clubs' | 'teams'
   let tab = $state<Tab>('users')
-  let users = $state<User[]>([])
+  let users = $state<UserSummary[]>([])
   let clubs = $state<Named[]>([])
   let teams = $state<Named[]>([])
   let search = $state('')
@@ -22,7 +22,7 @@
   const rows = $derived(
     (tab === 'users' ? users : tab === 'clubs' ? clubs : teams).filter((r) =>
       r.name.toLowerCase().includes(search.toLowerCase()),
-    ) as (Named & Partial<User>)[],
+    ) as (Named & Partial<UserSummary>)[],
   )
 
   async function save(e: SubmitEvent) {
@@ -101,7 +101,7 @@
               <td>{r.name}</td>
               {#if tab === 'users'}
                 <td>{r.birthday}</td>
-                <td class="num">{(r as User & { matches?: string[] }).matches?.length ?? 0}</td>
+                <td class="num">{r.matchCount ?? 0}</td>
               {/if}
               <td class="num">
                 <button onclick={() => (editing = { id: r.id, name: r.name, birthday: r.birthday ?? '' })}

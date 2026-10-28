@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/janenen/auswertung/internal/model"
 	"github.com/janenen/auswertung/internal/report"
@@ -24,9 +25,47 @@ func (s *Server) meta(w http.ResponseWriter, r *http.Request) {
 
 // --- users, clubs, teams ---
 
-func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) { writeJSON(w, s.store.Users()) }
-func (s *Server) listClubs(w http.ResponseWriter, r *http.Request) { writeJSON(w, s.store.Clubs()) }
-func (s *Server) listTeams(w http.ResponseWriter, r *http.Request) { writeJSON(w, s.store.Teams()) }
+type userView struct {
+	model.User
+	MatchCount int `json:"matchCount"`
+}
+
+func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := s.store.Users()
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	counts, err := s.store.MatchCounts()
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	out := make([]userView, len(users))
+	for i, u := range users {
+		out[i] = userView{u, counts[u.ID]}
+	}
+	writeJSON(w, out)
+}
+
+func (s *Server) listClubs(w http.ResponseWriter, r *http.Request) {
+	clubs, err := s.store.Clubs()
+	respond(w, clubs, err)
+}
+
+func (s *Server) listTeams(w http.ResponseWriter, r *http.Request) {
+	teams, err := s.store.Teams()
+	respond(w, teams, err)
+}
+
+// respond writes v, or the error if there is one.
+func respond(w http.ResponseWriter, v any, err error) {
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	writeJSON(w, v)
+}
 
 func requireName(name string) (string, error) {
 	name = strings.TrimSpace(name)
@@ -102,10 +141,19 @@ type competitionSummary struct {
 }
 
 func (s *Server) listCompetitions(w http.ResponseWriter, r *http.Request) {
-	active := r.URL.Query().Get("active") != "false"
+	comps, err := s.store.Competitions(r.URL.Query().Get("active") != "false")
+	if err != nil {
+		fail(w, err)
+		return
+	}
+	counts, err := s.store.EntryCounts()
+	if err != nil {
+		fail(w, err)
+		return
+	}
 	out := []competitionSummary{}
-	for _, c := range s.store.Competitions(active) {
-		out = append(out, competitionSummary{c, len(c.Entries)})
+	for _, c := range comps {
+		out = append(out, competitionSummary{c, counts[c.ID]})
 	}
 	writeJSON(w, out)
 }
@@ -119,6 +167,9 @@ func validateCompetition(c *model.Competition, league *model.RSBLeague) error {
 	var err error
 	if c.Name, err = requireName(c.Name); err != nil {
 		return err
+	}
+	if strings.TrimSpace(c.Date) == "" {
+		c.Date = time.Now().Format("02.01.2006")
 	}
 	if _, ok := model.Targets[c.TypeOfTarget]; !ok {
 		return errBadRequest("Kein gültiger Scheibentyp ausgewählt")
@@ -250,7 +301,11 @@ func (s *Server) competitionView(id string) (competitionView, error) {
 			v.League = &lv
 		}
 	}
-	for _, m := range s.store.Matches(c.Entries) {
+	matches, err := s.store.CompetitionMatches(c.ID)
+	if err != nil {
+		return competitionView{}, err
+	}
+	for _, m := range matches {
 		v.Entries = append(v.Entries, s.entry(c, m))
 	}
 	return v, nil
@@ -311,7 +366,10 @@ func (s *Server) results(id string) (resultsView, rankedLists, error) {
 		return resultsView{}, lists, err
 	}
 	c := v.Competition
-	matches := s.store.Matches(c.Entries)
+	matches, err := s.store.CompetitionMatches(c.ID)
+	if err != nil {
+		return resultsView{}, lists, err
+	}
 	res := resultsView{competitionView: v, Ranked: []entryView{}, Home: []entryView{}, Guest: []entryView{}}
 	add := func(views *[]entryView, entries *[]report.RankedEntry, m model.Match) {
 		e := s.entry(c, m)

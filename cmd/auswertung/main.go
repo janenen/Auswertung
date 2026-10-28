@@ -47,6 +47,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("opening database: %v", err)
 	}
+	defer st.Close()
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

@@ -11,7 +11,10 @@ export interface User {
   id: string
   name: string
   birthday: string
-  niceness: number
+}
+
+export interface UserSummary extends User {
+  matchCount: number
 }
 
 export interface Named {
@@ -29,7 +32,7 @@ export interface Competition {
   decimal: boolean
   active: boolean
   modus: string
-  entries: string[]
+  /** ID of the league pairing, empty for other competitions. */
   league: string
 }
 
@@ -101,7 +104,8 @@ export interface MatchView {
     active: boolean
     club: string
     team: string
-    competitions: string[]
+    /** Empty for a quick analysis. */
+    competition: string
   }
   shooter: string
   club: string
@@ -189,7 +193,7 @@ const get = <T>(path: string) => request<T>('GET', path)
 export const api = {
   meta: () => get<Meta>('/meta'),
 
-  users: () => get<User[]>('/users'),
+  users: () => get<UserSummary[]>('/users'),
   saveUser: (u: Partial<User>) =>
     u.id ? request<User>('PUT', `/users/${u.id}`, u) : request<User>('POST', '/users', u),
   clubs: () => get<Named[]>('/clubs'),

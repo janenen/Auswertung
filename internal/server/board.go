@@ -77,10 +77,20 @@ func tile(key, shooter, targetType string, shots model.Shots, decimal, live bool
 // shots of readings that are still running.
 func (s *Server) board(w http.ResponseWriter, r *http.Request) {
 	live := s.readings.Live()
+	comps, err := s.store.Competitions(true)
+	if err != nil {
+		fail(w, err)
+		return
+	}
 	out := []boardCompetition{}
-	for _, c := range s.store.Competitions(true) {
+	for _, c := range comps {
 		bc := boardCompetition{ID: c.ID, Name: c.Name, Count: c.Count, Tiles: []boardTile{}}
-		for _, m := range s.store.Matches(c.Entries) {
+		matches, err := s.store.CompetitionMatches(c.ID)
+		if err != nil {
+			fail(w, err)
+			return
+		}
+		for _, m := range matches {
 			shots, running := m.Shots, false
 			for _, l := range live {
 				if l.Tag.MatchID == m.ID {

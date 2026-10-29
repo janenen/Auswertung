@@ -1,13 +1,14 @@
 // UI translations. German texts are the keys; en.ts defines the key set
-// and gu.ts/ml.ts are type-checked against it.
+// and es.ts/gu.ts/ml.ts are type-checked against it.
 import { en, type Key } from './locales/en'
+import { es } from './locales/es'
 import { gu } from './locales/gu'
 import { ml } from './locales/ml'
 
-export const locales = { de: 'Deutsch', en: 'English', gu: 'ગુજરાતી', ml: 'മലയാളം' } as const
+export const locales = { de: 'Deutsch', en: 'English', es: 'Español', gu: 'ગુજરાતી', ml: 'മലയാളം' } as const
 export type Locale = keyof typeof locales
 
-const dictionaries: Record<Exclude<Locale, 'de'>, Record<Key, string>> = { en, gu, ml }
+const dictionaries: Record<Exclude<Locale, 'de'>, Record<Key, string>> = { en, es, gu, ml }
 const STORAGE_KEY = 'auswertung.locale'
 
 function initial(): Locale {

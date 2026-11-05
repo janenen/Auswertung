@@ -268,4 +268,25 @@ export const gu: Record<Key, string> = {
   'Liga-Formular nicht gefunden': 'લીગ ફોર્મ મળ્યું નથી',
   'Name fehlt': 'નામ ખૂટે છે',
   'Simulator ist nicht aktiviert': 'સિમ્યુલેટર સક્રિય નથી',
+  // cameras
+  'Kamerafenster öffnen, z.B. für einen zweiten Bildschirm': 'કેમેરા વિન્ડો ખોલો, દા.ત. બીજી સ્ક્રીન માટે',
+  Kameras: 'કેમેરા',
+  'Kameraansicht öffnen': 'કેમેરા દૃશ્ય ખોલો',
+  'Verbinde…': 'જોડાઈ રહ્યું છે…',
+  'Keine Verbindung': 'કનેક્શન નથી',
+  '{fps} Bilder/s': '{fps} ફ્રેમ/સે',
+  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
+    'કોઈ કેમેરા સેટ નથી. કેમેરા માસ્ટર ડેટા → કેમેરા હેઠળ ઉમેરવામાં આવે છે.',
+  'Alle Kameras zeigen': 'બધા કેમેરા બતાવો',
+  'Nur diese Kamera zeigen': 'ફક્ત આ કેમેરા બતાવો',
+  Adresse: 'સરનામું',
+  'IP-Adresse oder Stream-URL': 'IP સરનામું અથવા સ્ટ્રીમ URL',
+  Vorschau: 'પૂર્વાવલોકન',
+  'Für Kameras mit der Auswertung-Firmware (ESP32-CAM) genügt die IP-Adresse; andere Kameras mit der vollständigen MJPEG-Stream-URL eintragen.':
+    'Auswertung ફર્મવેર (ESP32-CAM) વાળા કેમેરા માટે IP સરનામું પૂરતું છે; અન્ય કેમેરા માટે સંપૂર્ણ MJPEG સ્ટ્રીમ URL દાખલ કરો.',
+  'Kamera löschen?': 'કેમેરા કાઢી નાખવો?',
+  'Die Kamera „{name}" wird entfernt.': 'કેમેરા “{name}” દૂર કરવામાં આવશે.',
+  'Adresse fehlt': 'સરનામું ખૂટે છે',
+  'Stream beendet': 'સ્ટ્રીમ સમાપ્ત',
+  'Zeitüberschreitung, keine Bilder': 'સમય સમાપ્ત, કોઈ ફ્રેમ નથી',
 }

@@ -268,4 +268,25 @@ export const ml: Record<Key, string> = {
   'Liga-Formular nicht gefunden': 'ലീഗ് ഫോം കണ്ടെത്തിയില്ല',
   'Name fehlt': 'പേര് നൽകിയിട്ടില്ല',
   'Simulator ist nicht aktiviert': 'സിമുലേറ്റർ സജീവമല്ല',
+  // cameras
+  'Kamerafenster öffnen, z.B. für einen zweiten Bildschirm': 'ക്യാമറ വിൻഡോ തുറക്കുക, ഉദാ. രണ്ടാമത്തെ സ്ക്രീനിനായി',
+  Kameras: 'ക്യാമറകൾ',
+  'Kameraansicht öffnen': 'ക്യാമറ കാഴ്ച തുറക്കുക',
+  'Verbinde…': 'കണക്റ്റ് ചെയ്യുന്നു…',
+  'Keine Verbindung': 'കണക്ഷൻ ഇല്ല',
+  '{fps} Bilder/s': '{fps} ഫ്രെയിം/സെ',
+  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
+    'ക്യാമറകളൊന്നും സജ്ജീകരിച്ചിട്ടില്ല. മാസ്റ്റർ ഡാറ്റ → ക്യാമറകൾ എന്നതിൽ ക്യാമറകൾ ചേർക്കാം.',
+  'Alle Kameras zeigen': 'എല്ലാ ക്യാമറകളും കാണിക്കുക',
+  'Nur diese Kamera zeigen': 'ഈ ക്യാമറ മാത്രം കാണിക്കുക',
+  Adresse: 'വിലാസം',
+  'IP-Adresse oder Stream-URL': 'IP വിലാസം അല്ലെങ്കിൽ സ്ട്രീം URL',
+  Vorschau: 'പ്രിവ്യൂ',
+  'Für Kameras mit der Auswertung-Firmware (ESP32-CAM) genügt die IP-Adresse; andere Kameras mit der vollständigen MJPEG-Stream-URL eintragen.':
+    'Auswertung ഫേംവെയർ (ESP32-CAM) ഉള്ള ക്യാമറകൾക്ക് IP വിലാസം മതി; മറ്റ് ക്യാമറകൾക്ക് പൂർണ്ണ MJPEG സ്ട്രീം URL നൽകുക.',
+  'Kamera löschen?': 'ക്യാമറ ഇല്ലാതാക്കണോ?',
+  'Die Kamera „{name}" wird entfernt.': 'ക്യാമറ “{name}” നീക്കം ചെയ്യും.',
+  'Adresse fehlt': 'വിലാസം നൽകിയിട്ടില്ല',
+  'Stream beendet': 'സ്ട്രീം അവസാനിച്ചു',
+  'Zeitüberschreitung, keine Bilder': 'സമയപരിധി കഴിഞ്ഞു, ഫ്രെയിമുകളില്ല',
 }

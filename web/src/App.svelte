@@ -16,6 +16,7 @@
   import People from './routes/People.svelte'
   import Shooter from './routes/Shooter.svelte'
   import Board from './routes/Board.svelte'
+  import Cameras from './routes/Cameras.svelte'
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const routes: [string, Component<any>][] = [
@@ -81,6 +82,8 @@
 
 {#if route.path === '/board'}
   {#if loaded}<Board query={route.query} />{/if}
+{:else if route.path === '/cameras'}
+  {#if loaded}<Cameras />{/if}
 {:else if stopped}
   <main class="stopped">
     <h1>{t('Auswertung beendet')}</h1>
@@ -100,6 +103,9 @@
     </select>
     <a class="button" href={href('/board')} target="_blank" title={t('Visualisierungsfenster öffnen, z.B. für einen zweiten Bildschirm')}
       >{t('Visualisierung')}</a
+    >
+    <a class="button" href={href('/cameras')} target="_blank" title={t('Kamerafenster öffnen, z.B. für einen zweiten Bildschirm')}
+      >{t('Kameras')}</a
     >
     <button onclick={() => (confirmQuit = true)}>{t('Programm beenden')}</button>
   </header>

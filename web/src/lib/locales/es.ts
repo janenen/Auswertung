@@ -269,4 +269,26 @@ export const es: Record<Key, string> = {
   'Liga-Formular nicht gefunden': 'No se encontró el formulario de liga',
   'Name fehlt': 'Falta el nombre',
   'Simulator ist nicht aktiviert': 'El simulador no está activado',
+  // cameras
+  'Kamerafenster öffnen, z.B. für einen zweiten Bildschirm':
+    'Abrir la ventana de cámaras, p. ej. para una segunda pantalla',
+  Kameras: 'Cámaras',
+  'Kameraansicht öffnen': 'Abrir vista de cámaras',
+  'Verbinde…': 'Conectando…',
+  'Keine Verbindung': 'Sin conexión',
+  '{fps} Bilder/s': '{fps} imágenes/s',
+  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
+    'No hay cámaras configuradas. Las cámaras se añaden en Datos maestros → Cámaras.',
+  'Alle Kameras zeigen': 'Mostrar todas las cámaras',
+  'Nur diese Kamera zeigen': 'Mostrar solo esta cámara',
+  Adresse: 'Dirección',
+  'IP-Adresse oder Stream-URL': 'Dirección IP o URL del stream',
+  Vorschau: 'Vista previa',
+  'Für Kameras mit der Auswertung-Firmware (ESP32-CAM) genügt die IP-Adresse; andere Kameras mit der vollständigen MJPEG-Stream-URL eintragen.':
+    'Para cámaras con el firmware de Auswertung (ESP32-CAM) basta la dirección IP; para otras cámaras introduzca la URL completa del stream MJPEG.',
+  'Kamera löschen?': '¿Eliminar la cámara?',
+  'Die Kamera „{name}" wird entfernt.': 'Se eliminará la cámara «{name}».',
+  'Adresse fehlt': 'Falta la dirección',
+  'Stream beendet': 'Stream finalizado',
+  'Zeitüberschreitung, keine Bilder': 'Tiempo agotado, sin imágenes',
 }

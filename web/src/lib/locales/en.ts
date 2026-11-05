@@ -267,6 +267,27 @@ export const en = {
   'Liga-Formular nicht gefunden': 'League form not found',
   'Name fehlt': 'Name missing',
   'Simulator ist nicht aktiviert': 'Simulator is not enabled',
+  // cameras
+  'Kamerafenster öffnen, z.B. für einen zweiten Bildschirm': 'Open the camera window, e.g. for a second screen',
+  Kameras: 'Cameras',
+  'Kameraansicht öffnen': 'Open camera view',
+  'Verbinde…': 'Connecting…',
+  'Keine Verbindung': 'No connection',
+  '{fps} Bilder/s': '{fps} frames/s',
+  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
+    'No cameras set up. Cameras are added under Master data → Cameras.',
+  'Alle Kameras zeigen': 'Show all cameras',
+  'Nur diese Kamera zeigen': 'Show only this camera',
+  Adresse: 'Address',
+  'IP-Adresse oder Stream-URL': 'IP address or stream URL',
+  Vorschau: 'Preview',
+  'Für Kameras mit der Auswertung-Firmware (ESP32-CAM) genügt die IP-Adresse; andere Kameras mit der vollständigen MJPEG-Stream-URL eintragen.':
+    'For cameras with the Auswertung firmware (ESP32-CAM) the IP address is enough; enter the full MJPEG stream URL for other cameras.',
+  'Kamera löschen?': 'Delete camera?',
+  'Die Kamera „{name}" wird entfernt.': 'The camera “{name}” will be removed.',
+  'Adresse fehlt': 'Address missing',
+  'Stream beendet': 'Stream ended',
+  'Zeitüberschreitung, keine Bilder': 'Timeout, no frames',
 }
 
 export type Key = keyof typeof en

@@ -213,6 +213,31 @@ export interface BoardCompetition {
   tiles: BoardTile[]
 }
 
+export interface Camera {
+  id: string
+  name: string
+  /** URL of the MJPEG stream (normalized by the server). */
+  url: string
+}
+
+export interface CameraStatus {
+  /** The server reads the stream (someone is watching). */
+  active: boolean
+  connected: boolean
+  fps: number
+  width: number
+  height: number
+  error?: string
+}
+
+export interface CameraView extends Camera {
+  status: CameraStatus
+}
+
+/** Same-origin MJPEG stream relayed by the server. */
+export const cameraStreamURL = (id: string) => `/api/cameras/${id}/stream`
+export const cameraSnapshotURL = (id: string) => `/api/cameras/${id}/snapshot.jpg`
+
 async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch('/api' + path, {
     method,
@@ -274,6 +299,11 @@ export const api = {
     data?: string // base64
   }) => request<{ id: string }>('POST', '/readings', r),
   stopReading: (id: string, keep: boolean) => request<void>('POST', `/readings/${id}/stop`, { keep }),
+
+  cameras: () => get<CameraView[]>('/cameras'),
+  saveCamera: (c: Partial<Camera>) =>
+    c.id ? request<Camera>('PUT', `/cameras/${c.id}`, c) : request<Camera>('POST', '/cameras', c),
+  deleteCamera: (id: string) => request<void>('DELETE', `/cameras/${id}`),
 
   shutdown: () => request<void>('POST', '/shutdown'),
 }

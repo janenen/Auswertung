@@ -1,6 +1,9 @@
 // Command auswertung starts the local web app and opens it in the browser.
 package main
 
+// The Windows icon: rsrc_windows_*.syso, linked automatically for GOOS=windows.
+//go:generate go run ../../scripts/winres -icon ../../web/public/favicon.ico
+
 import (
 	"context"
 	"errors"

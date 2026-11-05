@@ -18,7 +18,10 @@ go run ./cmd/auswertung -no-browser      # run backend (flags: -addr, -data db, 
 go test ./...                            # all backend tests
 go test ./internal/store -run TestLegacyImport   # single test
 gofmt -l . && go vet ./...               # CI also checks these
+go generate ./cmd/auswertung             # after changing web/public/favicon.ico: regenerate the Windows icon resources
 ```
+
+The Windows executables get their icon from `cmd/auswertung/rsrc_windows_{amd64,arm64}.syso` (committed; the Go linker picks them up for `GOOS=windows`), written from `web/public/favicon.ico` by the stdlib-only generator `scripts/winres`; a test fails when they are outdated. ELF and bare macOS binaries have no icons.
 
 CI (`.github/workflows/ci.yml`) runs frontend check/build, gofmt, vet and tests. Pushing a `*.*.*` tag runs `.github/workflows/release.yml`: checks and tests, then `scripts/build-release.sh <tag>` cross-compiles (CGO off) for windows/linux/darwin × amd64/arm64 into `dist/` (zip for Windows, tar.gz elsewhere, plus `SHA256SUMS`, version via `-X main.version`) and publishes a GitHub release.
 

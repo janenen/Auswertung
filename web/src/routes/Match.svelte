@@ -1,8 +1,9 @@
 <script lang="ts">
-  import { type Competition, type MatchView } from '../lib/api'
+  import { api, type Competition, type MatchView } from '../lib/api'
   import { loadMatch, matchTitle } from '../lib/match'
   import { fmt1, fmt2, result, ringValue } from '../lib/meta.svelte'
-  import { href } from '../lib/router.svelte'
+  import { href, navigate } from '../lib/router.svelte'
+  import Confirm from '../lib/Confirm.svelte'
   import Target from '../lib/Target.svelte'
   import Distribution from '../lib/Distribution.svelte'
   import { t, tx } from '../lib/i18n.svelte'
@@ -15,6 +16,7 @@
   let series = $state(-1) // -1: whole match
   let selected = $state(-1)
   let qrFailed = $state(false)
+  let confirmDelete = $state(false)
 
   // The competition comes from the query or the match itself; a quick
   // analysis has its title and scoring stored with the match.
@@ -60,6 +62,26 @@
     }),
   )
 
+  // Entries of a finished competition stay as they are; quick analyses
+  // recorded before their shot count was stored cannot be continued.
+  const editable = $derived(!competitionId || !!competition?.active)
+  const continueHref = $derived(
+    view?.match.active && editable && (competitionId || view.match.count > 0)
+      ? href(competitionId ? `/competitions/${competitionId}/entry` : '/entry', { match: id })
+      : '',
+  )
+
+  async function remove() {
+    try {
+      await api.deleteMatch(id)
+      if (query.shooter) navigate(`/people/${query.shooter}`)
+      else if (competitionId) navigate(`/competitions/${competitionId}`)
+      else navigate(`/people/${view!.match.shooter}`)
+    } catch (e) {
+      error = (e as Error).message
+    }
+  }
+
   function step(delta: number) {
     if (!view) return
     const n = view.series.length + 1
@@ -82,6 +104,9 @@
       </p>
     </div>
     <span class="spacer"></span>
+    {#if continueHref}
+      <a class="button" href={continueHref}>{t('Fortsetzen')}</a>
+    {/if}
     <a class="button primary" href={printHref} target="_blank">{t('Drucken / PDF')}</a>
     {#if csvExport}
       <a class="button" href="/api/matches/{id}/export.csv">{t('CSV erzeugen')}</a>
@@ -97,7 +122,22 @@
     {:else if !query.shooter}
       <a class="button" href={href('/')}>{t('Zur Übersicht')}</a>
     {/if}
+    {#if editable}
+      <button class="danger" onclick={() => (confirmDelete = true)}>{t('Löschen')}</button>
+    {/if}
   </div>
+
+  <Confirm
+    bind:open={confirmDelete}
+    title={t(competitionId ? 'Beitrag aus dem Wettkampf entfernen?' : 'Schnellauswertung löschen?')}
+    message={t('{shooter}, {n} Schuss. Das Ergebnis wird endgültig gelöscht.', {
+      shooter: view.shooter,
+      n: view.match.shots.length,
+    })}
+    confirmLabel={t('Löschen')}
+    danger
+    onconfirm={remove}
+  />
 
   <div class="layout">
     <section class="card target-card">

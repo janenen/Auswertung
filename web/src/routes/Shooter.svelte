@@ -20,6 +20,8 @@
       .catch((e) => (error = e.message))
   })
 
+  // Incomplete quick analyses with a known shot count can be continued.
+  const incomplete = $derived(matches.filter((m) => m.active && !m.competitionId && m.count > 0))
   const targets = $derived([...new Set(matches.map((m) => m.typeOfTarget))].sort())
   const shown = $derived(
     matches.filter(
@@ -43,6 +45,18 @@
     <span class="spacer"></span>
     <a class="button" href={href('/people')}>{t('Zurück')}</a>
   </div>
+
+  {#if incomplete.length}
+    <div class="notice">
+      <strong>{t('Unvollständige Schnellauswertungen:')}</strong>
+      {#each incomplete as m (m.matchId)}
+        <span class="incomplete">
+          {tx(m.title)}, {m.date} ({m.shots}/{m.count})
+          <button onclick={() => navigate('/entry', { match: m.matchId })}>{t('Fortsetzen')}</button>
+        </span>
+      {/each}
+    </div>
+  {/if}
 
   {#if matches.length}
     <div class="actions filters">
@@ -119,6 +133,21 @@
   }
   .sub {
     margin: 0.2rem 0 0;
+  }
+  .notice {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+  }
+  .incomplete {
+    display: inline-flex;
+    gap: 0.4rem;
+    align-items: center;
+  }
+  .incomplete button {
+    padding: 0.15rem 0.6rem;
   }
   .filters {
     margin-bottom: 0.75rem;

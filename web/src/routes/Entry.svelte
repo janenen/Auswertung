@@ -1,8 +1,9 @@
 <script lang="ts">
   // Wizard for a new entry: shooter → machine → live reading. Used for
-  // competitions (id), continuing an incomplete match (query.match) and
-  // quick analyses (quick, settings in the query).
-  import { api, type CompetitionView, type Named, type QuickSettings, type User } from '../lib/api'
+  // competitions (id), continuing an incomplete match (query.match, of a
+  // competition or a quick analysis) and quick analyses (quick, settings in
+  // the query).
+  import { api, type CompetitionView, type MatchView, type Named, type QuickSettings, type User } from '../lib/api'
   import { navigate, href } from '../lib/router.svelte'
   import ShooterStep from './entry/ShooterStep.svelte'
   import MachineStep from './entry/MachineStep.svelte'
@@ -13,8 +14,10 @@
     $props()
 
   const continueMatch = $derived(query.match ?? '')
+  // An incomplete quick analysis continues with the settings stored with it.
+  const continueQuick = $derived(!id && !!continueMatch)
   const quickSettings: QuickSettings | undefined = $derived(
-    quick
+    quick && !continueQuick
       ? {
           name: query.name || 'Schnellauswertung',
           count: Number(query.count) || 40,
@@ -27,6 +30,7 @@
   const quickDecimal = $derived(query.decimal === 'true')
 
   let view = $state<CompetitionView | null>(null)
+  let quickMatch = $state<MatchView | null>(null)
   let error = $state('')
   // The page is re-created on every route change, so the initial query decides the first step.
   // svelte-ignore state_referenced_locally
@@ -46,17 +50,35 @@
       .then((v) => (view = v))
       .catch((e) => (error = e.message))
   })
+  $effect(() => {
+    if (!continueQuick) return
+    api
+      .match(continueMatch)
+      .then((m) => (quickMatch = m))
+      .catch((e) => (error = e.message))
+  })
 
   const competition = $derived(view?.competition)
-  const continued = $derived(view?.entries.find((e) => e.matchId === continueMatch))
-  const targetType = $derived(competition?.type_of_target ?? quickSettings?.type_of_target ?? 'LG')
-  const total = $derived(competition?.count ?? quickSettings?.count ?? 0)
+  const quickContinued = $derived(
+    quickMatch && { shooter: quickMatch.shooter, shots: quickMatch.match.shots.length },
+  )
+  const continued = $derived(view?.entries.find((e) => e.matchId === continueMatch) ?? quickContinued)
+  const targetType = $derived(
+    competition?.type_of_target ?? quickMatch?.match.type_of_target ?? quickSettings?.type_of_target ?? 'LG',
+  )
+  const total = $derived(competition?.count ?? quickMatch?.match.count ?? quickSettings?.count ?? 0)
   const already = $derived(continued?.shots ?? 0)
-  const title = $derived(competition?.name ?? quickSettings?.name ?? '')
-  const backHref = $derived(id ? href(`/competitions/${id}`) : href('/quick'))
+  const title = $derived(
+    competition?.name ?? (quickMatch ? quickMatch.match.title || 'Schnellauswertung' : quickSettings?.name) ?? '',
+  )
+  const backHref = $derived(
+    id ? href(`/competitions/${id}`) : continueQuick ? href(`/matches/${continueMatch}`) : href('/quick'),
+  )
 
   function finished(matchId: string) {
-    if (quick) {
+    if (continueQuick) {
+      navigate(`/matches/${matchId}`)
+    } else if (quick) {
       navigate(`/matches/${matchId}`, { title: quickSettings!.name, decimal: quickDecimal })
     } else {
       navigate(`/matches/${matchId}`, { competition: id })
@@ -69,7 +91,7 @@
 
 {#if error}
   <p class="error">{tx(error)}</p>
-{:else if id && !view}
+{:else if (id && !view) || (continueQuick && !quickMatch)}
   <p class="muted">{t('Lade…')}</p>
 {:else}
   <div class="actions head">

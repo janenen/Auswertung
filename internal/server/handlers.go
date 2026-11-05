@@ -60,7 +60,8 @@ type shooterMatchView struct {
 	Title         string `json:"title"`
 	TypeOfTarget  string `json:"typeOfTarget"`
 	Decimal       bool   `json:"decimal"`
-	// Count is the competition's number of shots, 0 for a quick analysis.
+	// Count is the number of shots of the competition or quick analysis
+	// (0 for quick analyses recorded before it was stored).
 	Count int `json:"count"`
 }
 
@@ -95,7 +96,7 @@ func (s *Server) userMatches(w http.ResponseWriter, r *http.Request) {
 		}
 		out = append(out, shooterMatchView{
 			entryView: s.entry(c, m), CompetitionID: m.Competition, Title: title,
-			TypeOfTarget: m.TypeOfTarget, Decimal: c.Decimal, Count: c.Count,
+			TypeOfTarget: m.TypeOfTarget, Decimal: c.Decimal, Count: cmp.Or(c.Count, m.Count),
 		})
 	}
 	// Recording order is chronological except for imported data.

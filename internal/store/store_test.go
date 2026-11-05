@@ -312,3 +312,34 @@ func TestRealDatabase(t *testing.T) {
 		t.Errorf("imported %d of %d matches", total, len(legacy.Matches))
 	}
 }
+
+func TestCameras(t *testing.T) {
+	s := open(t, t.TempDir())
+	b, err := s.SaveCamera(model.Camera{Name: "Stand 2", URL: "http://10.0.0.2:81/stream"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a, _ := s.SaveCamera(model.Camera{Name: "Stand 1", URL: "http://10.0.0.1:81/stream"})
+	if cs, err := s.Cameras(); err != nil || len(cs) != 2 || cs[0] != a || cs[1] != b {
+		t.Fatalf("cameras = %+v, %v", cs, err)
+	}
+	b.URL = "http://10.0.0.3:81/stream"
+	if _, err := s.SaveCamera(b); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.Camera(b.ID); err != nil || got != b {
+		t.Errorf("camera = %+v, %v", got, err)
+	}
+	if err := s.DeleteCamera(a.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.Camera(a.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("deleted camera: %v", err)
+	}
+	if err := s.DeleteCamera(a.ID); !errors.Is(err, ErrNotFound) {
+		t.Errorf("deleting twice: %v", err)
+	}
+	if _, err := s.SaveCamera(model.Camera{ID: "missing", Name: "x"}); !errors.Is(err, ErrNotFound) {
+		t.Errorf("saving unknown camera: %v", err)
+	}
+}

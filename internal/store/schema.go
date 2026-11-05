@@ -83,4 +83,12 @@ ALTER TABLE matches ADD COLUMN decimal INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE matches ADD COLUMN shot_count INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE matches ADD COLUMN shots_per_target INTEGER NOT NULL DEFAULT 0;
 `,
+	// 4: network cameras for the camera view.
+	`
+CREATE TABLE cameras (
+	id   TEXT PRIMARY KEY,
+	name TEXT NOT NULL,
+	url  TEXT NOT NULL
+);
+`,
 }

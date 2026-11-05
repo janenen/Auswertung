@@ -123,6 +123,14 @@ type Team struct {
 	ID   string `json:"id"`
 }
 
+// Camera is a network camera (MJPEG stream) showing a target.
+type Camera struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// URL of the MJPEG stream.
+	URL string `json:"url"`
+}
+
 type Competition struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`

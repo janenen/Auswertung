@@ -287,6 +287,53 @@ func (s *Store) SaveTeam(t model.Team) (model.Team, error) {
 	return model.Team(c), err
 }
 
+// --- cameras ---
+
+// Cameras returns all cameras sorted by name.
+func (s *Store) Cameras() ([]model.Camera, error) {
+	rows, err := s.db.Query("SELECT id, name, url FROM cameras ORDER BY name, id")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := []model.Camera{}
+	for rows.Next() {
+		var c model.Camera
+		if err := rows.Scan(&c.ID, &c.Name, &c.URL); err != nil {
+			return nil, err
+		}
+		out = append(out, c)
+	}
+	return out, rows.Err()
+}
+
+func (s *Store) Camera(id string) (model.Camera, error) {
+	c := model.Camera{ID: id}
+	err := s.db.QueryRow("SELECT name, url FROM cameras WHERE id = ?", id).Scan(&c.Name, &c.URL)
+	return c, notFound("camera", id, err)
+}
+
+func (s *Store) SaveCamera(c model.Camera) (model.Camera, error) {
+	if c.ID == "" {
+		c.ID = newID()
+		_, err := s.db.Exec("INSERT INTO cameras (id, name, url) VALUES (?, ?, ?)", c.ID, c.Name, c.URL)
+		return c, err
+	}
+	res, err := s.db.Exec("UPDATE cameras SET name = ?, url = ? WHERE id = ?", c.Name, c.URL, c.ID)
+	if err != nil {
+		return model.Camera{}, err
+	}
+	return c, requireRow(res, "camera", c.ID)
+}
+
+func (s *Store) DeleteCamera(id string) error {
+	res, err := s.db.Exec("DELETE FROM cameras WHERE id = ?", id)
+	if err != nil {
+		return err
+	}
+	return requireRow(res, "camera", id)
+}
+
 // --- competitions and leagues ---
 
 const competitionColumns = `c.id, c.name, c.date, c.shot_count, c.shots_per_target, c.target_type,

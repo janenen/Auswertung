@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/janenen/auswertung/internal/camera"
 	"github.com/janenen/auswertung/internal/reading"
 	"github.com/janenen/auswertung/internal/store"
 )
@@ -23,12 +24,13 @@ type Options struct {
 type Server struct {
 	store    *store.Store
 	readings *reading.Manager
+	cameras  *camera.Hub
 	opts     Options
 }
 
 // New returns the HTTP handler.
 func New(s *store.Store, frontend fs.FS, opts Options) http.Handler {
-	srv := &Server{store: s, readings: reading.NewManager(), opts: opts}
+	srv := &Server{store: s, readings: reading.NewManager(), cameras: camera.NewHub(), opts: opts}
 	return srv.routes(frontend)
 }
 
@@ -66,6 +68,13 @@ func (s *Server) routes(frontend fs.FS) http.Handler {
 	mux.HandleFunc("POST /api/readings", s.startReading)
 	mux.HandleFunc("GET /api/readings/{id}/events", s.readingEvents)
 	mux.HandleFunc("POST /api/readings/{id}/stop", s.stopReading)
+
+	mux.HandleFunc("GET /api/cameras", s.listCameras)
+	mux.HandleFunc("POST /api/cameras", s.saveCamera)
+	mux.HandleFunc("PUT /api/cameras/{id}", s.saveCamera)
+	mux.HandleFunc("DELETE /api/cameras/{id}", s.deleteCamera)
+	mux.HandleFunc("GET /api/cameras/{id}/stream", s.cameraStream)
+	mux.HandleFunc("GET /api/cameras/{id}/snapshot.jpg", s.cameraSnapshot)
 
 	mux.HandleFunc("POST /api/shutdown", s.shutdown)
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {

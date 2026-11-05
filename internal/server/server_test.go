@@ -2,6 +2,10 @@ package server
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"mime"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
@@ -427,5 +431,76 @@ func TestLeagueExport(t *testing.T) {
 	}
 	if code := call(t, ts, "GET", "/api/competitions/"+league.ID+"/league.xlsx", nil, nil); code != want {
 		t.Errorf("league export: %d, want %d", code, want)
+	}
+}
+
+func TestCameras(t *testing.T) {
+	ts := newTestServer(t)
+	frame := []byte("\xff\xd8not really a jpeg\xff\xd9")
+	cam := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "multipart/x-mixed-replace;boundary=x")
+		io.WriteString(w, "--x\r\n")
+		for r.Context().Err() == nil {
+			fmt.Fprintf(w, "Content-Type: image/jpeg\r\n\r\n%s\r\n--x\r\n", frame)
+			w.(http.Flusher).Flush()
+			time.Sleep(10 * time.Millisecond)
+		}
+	}))
+	defer func() {
+		cam.CloseClientConnections() // the relay keeps its connection for a while
+		cam.Close()
+	}()
+
+	if code := call(t, ts, "POST", "/api/cameras", map[string]string{"name": "Stand 1", "url": " "}, nil); code != 400 {
+		t.Errorf("camera without address: %d", code)
+	}
+	var c model.Camera
+	if code := call(t, ts, "POST", "/api/cameras", map[string]string{"name": "Stand 1", "url": cam.URL + "/stream"}, &c); code != 200 || c.URL != cam.URL+"/stream" {
+		t.Fatalf("create camera: %d %+v", code, c)
+	}
+	var bare model.Camera
+	call(t, ts, "POST", "/api/cameras", map[string]string{"name": "Stand 2", "url": "10.1.2.3"}, &bare)
+	if bare.URL != "http://10.1.2.3:81/stream" {
+		t.Errorf("bare address saved as %q", bare.URL)
+	}
+
+	resp, err := http.Get(ts.URL + "/api/cameras/" + c.ID + "/stream")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, params, _ := mime.ParseMediaType(resp.Header.Get("Content-Type"))
+	part, err := multipart.NewReader(resp.Body, params["boundary"]).NextPart()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := io.ReadAll(part); !bytes.Equal(got, frame) {
+		t.Errorf("relayed frame = %q", got)
+	}
+	resp.Body.Close()
+
+	var cams []struct {
+		model.Camera
+		Status struct{ Active, Connected bool }
+	}
+	call(t, ts, "GET", "/api/cameras", nil, &cams)
+	if len(cams) != 2 || cams[0].ID != c.ID || !cams[0].Status.Connected || cams[1].Status.Active {
+		t.Errorf("cameras = %+v", cams)
+	}
+
+	resp, err = http.Get(ts.URL + "/api/cameras/" + c.ID + "/snapshot.jpg")
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != 200 || resp.Header.Get("Content-Type") != "image/jpeg" || !bytes.Equal(got, frame) {
+		t.Errorf("snapshot: %d %q", resp.StatusCode, got)
+	}
+
+	if code := call(t, ts, "DELETE", "/api/cameras/"+c.ID, nil, nil); code != 204 {
+		t.Errorf("delete: %d", code)
+	}
+	if code := call(t, ts, "GET", "/api/cameras/"+c.ID+"/stream", nil, nil); code != 404 {
+		t.Errorf("stream of deleted camera: %d", code)
 	}
 }

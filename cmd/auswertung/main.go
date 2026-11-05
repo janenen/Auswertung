@@ -59,10 +59,14 @@ func main() {
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	srv := &http.Server{Handler: server.New(st, web.Dist(), server.Options{
-		LeagueTemplate: *leagueTemplate,
-		Shutdown:       stop,
-	})}
+	srv := &http.Server{
+		Handler: server.New(st, web.Dist(), server.Options{
+			LeagueTemplate: *leagueTemplate,
+			Shutdown:       stop,
+		}),
+		// Ends long-running responses (event and camera streams) on shutdown.
+		BaseContext: func(net.Listener) context.Context { return ctx },
+	}
 	go func() {
 		<-ctx.Done()
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

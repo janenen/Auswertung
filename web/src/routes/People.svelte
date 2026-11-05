@@ -1,5 +1,5 @@
 <script lang="ts">
-  // Master data: shooters, clubs, teams and cameras.
+  // Management: shooters, clubs, teams and cameras.
   import { api, cameraSnapshotURL, type Camera, type Named, type UserSummary } from '../lib/api'
   import Confirm from '../lib/Confirm.svelte'
   import { t, tx } from '../lib/i18n.svelte'
@@ -60,7 +60,7 @@
   const labels = { users: 'Schützen', clubs: 'Vereine', teams: 'Mannschaften', cameras: 'Kameras' } as const
 </script>
 
-<h1>{t('Stammdaten')}</h1>
+<h1>{t('Verwaltung')}</h1>
 
 <div class="actions bar">
   <div class="tabs" role="tablist">

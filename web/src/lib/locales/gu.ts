@@ -7,7 +7,7 @@ export const gu: Record<Key, string> = {
   Wettkämpfe: 'સ્પર્ધાઓ',
   Schnellauswertung: 'ઝડપી મૂલ્યાંકન',
   Archiv: 'આર્કાઇવ',
-  Stammdaten: 'મુખ્ય માહિતી',
+  Verwaltung: 'વ્યવસ્થાપન',
   'Auswertung beendet': 'Auswertung બંધ થયું',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'પ્રોગ્રામ બંધ કરવામાં આવ્યો છે. તમે આ વિન્ડો બંધ કરી શકો છો.',
@@ -275,8 +275,8 @@ export const gu: Record<Key, string> = {
   'Verbinde…': 'જોડાઈ રહ્યું છે…',
   'Keine Verbindung': 'કનેક્શન નથી',
   '{fps} Bilder/s': '{fps} ફ્રેમ/સે',
-  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
-    'કોઈ કેમેરા સેટ નથી. કેમેરા માસ્ટર ડેટા → કેમેરા હેઠળ ઉમેરવામાં આવે છે.',
+  'Keine Kameras eingerichtet. Kameras werden unter Verwaltung → Kameras hinzugefügt.':
+    'કોઈ કેમેરા સેટ નથી. કેમેરા વ્યવસ્થાપન → કેમેરા હેઠળ ઉમેરવામાં આવે છે.',
   'Alle Kameras zeigen': 'બધા કેમેરા બતાવો',
   'Nur diese Kamera zeigen': 'ફક્ત આ કેમેરા બતાવો',
   Adresse: 'સરનામું',

@@ -20,7 +20,7 @@ three random results each for the home and the guest team.
 
 Network cameras showing the targets can be watched tiled in a separate window
 ("Kameras" in the header, e.g. for a second screen). They are added under
-Stammdaten → Kameras. `firmware/esp32-cam` contains firmware for the ESP32-CAM
+Verwaltung → Kameras. `firmware/esp32-cam` contains firmware for the ESP32-CAM
 module with WiFi setup through its own access point; see its README.
 
 ## Usage

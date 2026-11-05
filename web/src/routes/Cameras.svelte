@@ -82,7 +82,7 @@
   </header>
 
   {#if loaded && cameras.length === 0}
-    <p class="empty">{t('Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.')}</p>
+    <p class="empty">{t('Keine Kameras eingerichtet. Kameras werden unter Verwaltung → Kameras hinzugefügt.')}</p>
   {:else}
     {@const s = layout.size}
     <div class="grid" style="grid-template-columns: repeat({layout.cols}, {s}px); gap: {GAP}px">

@@ -7,7 +7,7 @@ export const es: Record<Key, string> = {
   Wettkämpfe: 'Competiciones',
   Schnellauswertung: 'Análisis rápido',
   Archiv: 'Archivo',
-  Stammdaten: 'Datos maestros',
+  Verwaltung: 'Gestión',
   'Auswertung beendet': 'Auswertung finalizado',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'El programa ha finalizado. Puede cerrar esta ventana.',
@@ -277,8 +277,8 @@ export const es: Record<Key, string> = {
   'Verbinde…': 'Conectando…',
   'Keine Verbindung': 'Sin conexión',
   '{fps} Bilder/s': '{fps} imágenes/s',
-  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
-    'No hay cámaras configuradas. Las cámaras se añaden en Datos maestros → Cámaras.',
+  'Keine Kameras eingerichtet. Kameras werden unter Verwaltung → Kameras hinzugefügt.':
+    'No hay cámaras configuradas. Las cámaras se añaden en Gestión → Cámaras.',
   'Alle Kameras zeigen': 'Mostrar todas las cámaras',
   'Nur diese Kamera zeigen': 'Mostrar solo esta cámara',
   Adresse: 'Dirección',

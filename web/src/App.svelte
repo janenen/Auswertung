@@ -67,7 +67,7 @@
     { path: '/', label: 'Wettkämpfe' },
     { path: '/quick', label: 'Schnellauswertung' },
     { path: '/archive', label: 'Archiv' },
-    { path: '/people', label: 'Stammdaten' },
+    { path: '/people', label: 'Verwaltung' },
   ] as const
   const section = $derived(
     route.path === '/' || route.path.startsWith('/competitions')

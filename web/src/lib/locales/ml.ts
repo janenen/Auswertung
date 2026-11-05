@@ -7,7 +7,7 @@ export const ml: Record<Key, string> = {
   Wettkämpfe: 'മത്സരങ്ങൾ',
   Schnellauswertung: 'ദ്രുത വിശകലനം',
   Archiv: 'ആർക്കൈവ്',
-  Stammdaten: 'അടിസ്ഥാന വിവരങ്ങൾ',
+  Verwaltung: 'മാനേജ്മെന്റ്',
   'Auswertung beendet': 'Auswertung നിർത്തി',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'പ്രോഗ്രാം നിർത്തിയിരിക്കുന്നു. ഈ വിൻഡോ അടയ്ക്കാം.',
@@ -275,8 +275,8 @@ export const ml: Record<Key, string> = {
   'Verbinde…': 'കണക്റ്റ് ചെയ്യുന്നു…',
   'Keine Verbindung': 'കണക്ഷൻ ഇല്ല',
   '{fps} Bilder/s': '{fps} ഫ്രെയിം/സെ',
-  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
-    'ക്യാമറകളൊന്നും സജ്ജീകരിച്ചിട്ടില്ല. മാസ്റ്റർ ഡാറ്റ → ക്യാമറകൾ എന്നതിൽ ക്യാമറകൾ ചേർക്കാം.',
+  'Keine Kameras eingerichtet. Kameras werden unter Verwaltung → Kameras hinzugefügt.':
+    'ക്യാമറകളൊന്നും സജ്ജീകരിച്ചിട്ടില്ല. മാനേജ്മെന്റ് → ക്യാമറകൾ എന്നതിൽ ക്യാമറകൾ ചേർക്കാം.',
   'Alle Kameras zeigen': 'എല്ലാ ക്യാമറകളും കാണിക്കുക',
   'Nur diese Kamera zeigen': 'ഈ ക്യാമറ മാത്രം കാണിക്കുക',
   Adresse: 'വിലാസം',

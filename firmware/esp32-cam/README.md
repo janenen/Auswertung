@@ -39,7 +39,7 @@ click "WLAN zurücksetzen" on the setup page.
 
 ## Add the camera to Auswertung
 
-Go to Stammdaten → Kameras → "+ Neu", give the camera a name (e.g. "Stand 1")
+Go to Verwaltung → Kameras → "+ Neu", give the camera a name (e.g. "Stand 1")
 and enter its IP address. A bare address resolves to
 `http://<ip>:81/stream`. Other MJPEG cameras work too if you enter their full
 stream URL. Use the IP address rather than `<name>.local`: the release builds

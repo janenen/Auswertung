@@ -6,7 +6,7 @@ export const en = {
   Wettkämpfe: 'Competitions',
   Schnellauswertung: 'Quick analysis',
   Archiv: 'Archive',
-  Stammdaten: 'Master data',
+  Verwaltung: 'Management',
   'Auswertung beendet': 'Auswertung stopped',
   'Das Programm wurde beendet. Dieses Fenster kann geschlossen werden.':
     'The program has been stopped. You can close this window.',
@@ -274,8 +274,8 @@ export const en = {
   'Verbinde…': 'Connecting…',
   'Keine Verbindung': 'No connection',
   '{fps} Bilder/s': '{fps} frames/s',
-  'Keine Kameras eingerichtet. Kameras werden unter Stammdaten → Kameras hinzugefügt.':
-    'No cameras set up. Cameras are added under Master data → Cameras.',
+  'Keine Kameras eingerichtet. Kameras werden unter Verwaltung → Kameras hinzugefügt.':
+    'No cameras set up. Cameras are added under Management → Cameras.',
   'Alle Kameras zeigen': 'Show all cameras',
   'Nur diese Kamera zeigen': 'Show only this camera',
   Adresse: 'Address',
